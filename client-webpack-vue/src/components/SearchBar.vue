@@ -29,7 +29,7 @@ export default {
   },
   data () {
     return {
-      keyword: void 0
+      keyword: 'https://www.bilibili.com/bangumi/play/ep89267'
     }
   },
   methods: {

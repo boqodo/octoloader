@@ -78,7 +78,8 @@ async function extraVideoItemUrls (sval) {
           num: ep.index,
           cover: ep.cover,
           cid: ep.cid,
-          seasontype: json.result.season_type
+          seasontype: json.result.season_type,
+          downloadProgress: 0
         })
       })
       _store.name = json.result.title

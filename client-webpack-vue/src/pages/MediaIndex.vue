@@ -27,26 +27,45 @@
         <section class="columns video-item">
           <div class="column" v-for="item in curSeasonVideos" :key="item.url">
             <div class="card" v-if="item.url">
-              <div class="card-image" @click="openUrl(item.url)">
-                <figure class="image is-4by3">
-                  <img :src="localCover(item.url,item.cover)" alt="封面">
-                </figure>
-                <div class="video-item-times has-text-white">
-                  <span>{{item.times}}</span>
-                </div>
-              </div>
-              <div class="video-item-content">
-                <div class="video-item-num is-size-4 has-text-white has-text-weight-bold has-text-centered">
-                  <span>{{item.num}}</span>
-                </div>
-                <div class="video-item-name" :title="item.name">
-                  <div class="video-item-name-cell">
-                    <span>{{videoName(item.name)}}</span>
+              <div class="card-shade">
+                <div class="card-image">
+                  <figure class="image is-4by3">
+                    <img :src="localCover(item.url,item.cover)" alt="封面">
+                  </figure>
+                  <div class="video-item-times has-text-white">
+                    <span>{{item.times}}</span>
                   </div>
                 </div>
+                <div class="video-item-content">
+                  <div class="video-item-num is-size-4 has-text-white has-text-weight-bold has-text-centered">
+                    <span>{{item.num}}</span>
+                  </div>
+                  <div class="video-item-name" :title="item.name">
+                    <div class="video-item-name-cell">
+                      <span>{{videoName(item.name)}}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="video-item-status">
+                  <progress class="progress is-danger" :value="item.downloadProgress" max="100">{{item.downloadProgress}}</progress>
+                </div>
               </div>
-              <div class="video-item-status">
-                <progress class="progress is-danger" value="0" max="100">0%</progress>
+              <div class="video-shade has-text-centered">
+                <div class="play has-text-dark is-size-1"
+                  @click="openUrl(item.url)">
+                  <span class="icon is-large">
+                    <i class="fa fa-play" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="download is-size-4">
+                  <a class="button is-success"
+                    @click="downloadVideo(item)">
+                    <span class="icon is-large">
+                      <i class="fa fa-cloud-download" aria-hidden="true"></i>
+                    </span>
+                    <span>下载</span>
+                  </a>
+                </div>
               </div>
             </div>
             <div class="column" v-else></div>
@@ -79,6 +98,7 @@ export default {
         message: ''
       },
       selectedIndex: 0,
+      hoverVideoItem: null,
       entity: {
         title: '',
         isLocalCover: true,
@@ -115,12 +135,14 @@ export default {
       this.searchStatus.message = ''
 
       this.selectedIndex = 0
-      mediaApi.queryMedias(url)
+      mediaApi
+        .queryMedias(url)
         .then(res => {
           this.isStartSearch = false
           this.isSearch = false
           this.entity = res
-        }).catch(err => {
+        })
+        .catch(err => {
           this.isStartSearch = false
           this.searchStatus.type = -1
           this.searchStatus.message = err
@@ -129,8 +151,15 @@ export default {
     videoName (name) {
       return name
     },
+    downloadVideo (videoItem) {
+      this.$store.dispatch('addDownloadItem', videoItem)
+    },
     localCover (url, coverUrl) {
-      return this.entity.isLocalCover ? `http://localhost:3000/api/images?url=${encodeURIComponent(url)}&cover=${encodeURIComponent(coverUrl)}` : coverUrl
+      return this.entity.isLocalCover
+        ? `http://localhost:3000/api/images?url=${encodeURIComponent(
+          url
+        )}&cover=${encodeURIComponent(coverUrl)}`
+        : coverUrl
     },
     openUrl (url) {
       window.open(url)
@@ -220,6 +249,45 @@ export default {
       }
     }
   }
+}
+.video-shade {
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .play {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .download {
+    flex: none;
+    min-height: 3rem;
+    max-height: 3rem;
+    margin-bottom: 0.2rem;
+
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+  }
+}
+
+.card:hover > .card-shade {
+  opacity: 0.5;
+  transition: 0.25s ease-in-out;
+}
+.card:hover > .video-shade {
+  visibility: visible;
 }
 
 .video-footer {

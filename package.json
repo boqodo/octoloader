@@ -1,0 +1,11 @@
+{
+  "name": "octoloader",
+  "version": "1.0.0",
+  "author": "boqodo",
+  "license": "MIT",
+  "scripts": {
+    "client": "cd client-webpack-vue && yarn run dev",
+    "sever":"cd server-node-fastify && yarn run start",
+    "dev":"concurrently \"npm run client\" \"npm run sever\""
+  }
+}
