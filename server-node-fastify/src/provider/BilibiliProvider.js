@@ -2,9 +2,22 @@ const Provider = require('./Provider')
 const { URL } = require('url')
 const r2 = require('r2')
 const fs = require('fs')
+const path = require('path')
 const cheerio = require('cheerio')
+const crypto = require('crypto')
+const HEADERS = {
+  'User-Agent':
+		'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0'
+}
+const BILIBILI_APPKEY = '84956560bc028eb7'
+const BILIBILI_APPSEC = '94aba54af9065f71de72f5508f1cd42e'
+const savedir = 'D:\\ztest-demo'
 
 class BilibiliProvider extends Provider {
+  constructor (todoVideos) {
+    super()
+    this.todoVideos = todoVideos
+  }
   static match (url) {
     super.match(url)
     let u = new URL(url)
@@ -15,6 +28,20 @@ class BilibiliProvider extends Provider {
     let ss = await getSeasonUrls(url)
     ss.isLocalCover = true
     return ss
+  }
+
+  static async downloadVideo (video) {
+    let todoVideos = await parsedownloadurl(video)
+    return new BilibiliProvider(todoVideos)
+  }
+
+  async startDownload (reply) {
+    if (!this.isStartDownload) {
+      this.isStartDownload = true
+      let downress = await Promise.all(this.todoVideos.map(v => download(v, reply)))
+      return downress
+    }
+    return 0
   }
 }
 
@@ -111,6 +138,107 @@ async function getSeasonUrls (videourl) {
     fs.writeFileSync(file, JSON.stringify(store))
     return store
   }
+}
+
+function md5 (data) {
+  let md5 = crypto.createHash('md5')
+  md5.update(data)
+  return md5.digest('hex')
+}
+
+async function parsedownloadurl (video) {
+  let ourl = new URL(
+    'https://bangumi.bilibili.com/player/web_api/v2/playurl?' +
+			`cid=${video.cid}&appkey=${BILIBILI_APPKEY}&season_type=${
+			  video.seasontype
+			}` +
+			'&otype=json&type=&quality=0&module=bangumi&qn=0'
+  )
+  ourl.searchParams.sort()
+  let sign = md5(ourl.searchParams.toString() + BILIBILI_APPSEC)
+  ourl.searchParams.append('sign', sign)
+  let json = await r2(ourl.href, { HEADERS }).json
+  let downs = []
+  json.durl.forEach((item, index) => {
+    let downurl = new URL(item.url)
+    let videoitem = {
+      downurl: downurl,
+      seqnum: index,
+      filesize: item.size
+    }
+    downs.push(Object.assign(videoitem, video))
+  })
+  return downs
+}
+
+/**
+ * 下载视频分段信息到指定目录
+ *
+ * @param {{downurl:string,seqnum:number,url: string,title: string,num: number}} video  视频对象
+ */
+async function download (video, reply) {
+  return new Promise(async (resolve, reject) => {
+    let referer = video.url
+    let downloadurl = video.downurl
+    let filename = `${video.num}${video.name}-${video.seqnum}.flv`
+    let savefile = path.join(savedir, filename)
+    let downstatus = await downloadedStatus({
+      filename: savefile,
+      filesize: video.filesize
+    })
+    if (!downstatus) {
+      let headers = {
+        Host: downloadurl.host,
+        'User-Agent':
+					'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0',
+        Accept: '*/*',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Access-Control-Request-Headers': 'range',
+        'Access-Control-Request-Method': 'GET',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        Origin: 'https://www.bilibili.com',
+        Pragma: 'no-cache',
+        Referer: referer
+      }
+      let res = await r2(downloadurl.href, { headers }).response
+
+      let write = fs.createWriteStream(savefile)
+      let curLen = 0
+      res.body.on('error', data => {
+        reject(data)
+      })
+      res.body.on('data', function (chunk) {
+        curLen += chunk.length
+        reply.sse({event: 'downloading', url: referer, seqnum: video.seqnum, curLen: curLen})
+      })
+      res.body.on('end', () => {
+        reply.sse({event: 'finish', savefile: savefile, url: referer, seqnum: video.seqnum})
+        resolve(savefile)
+      })
+      res.body.pipe(write)
+    }
+  })
+}
+async function downloadedStatus (downitem) {
+  let file = downitem.filename
+  let filesize = downitem.filesize
+  return new Promise((resolve, reject) => {
+    fs.stat(file, (err, stats) => {
+      if (err) {
+        err.code === 'ENOENT' ? resolve(false) : reject(err)
+      }
+      if (!stats) {
+        resolve(false)
+      } else {
+        resolve({
+          isPart: Number(stats.size) !== Number(filesize),
+          cursize: stats.size
+        })
+      }
+    })
+  })
 }
 
 exports = module.exports = BilibiliProvider

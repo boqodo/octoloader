@@ -30,6 +30,12 @@ class Provider {
     let file = await download2Disk(coverUrl)
     return file
   }
+  static async downloadVideo (video) {
+
+  }
+  async startDownload () {
+
+  }
 }
 
 function download2Disk (coverUrl) {

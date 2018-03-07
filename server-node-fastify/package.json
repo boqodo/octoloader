@@ -13,7 +13,7 @@
     "r2": "^2.0.0"
   },
   "scripts": {
-    "start": "node  src/index.js",
+    "start": "nodemon --watch src src/index.js",
     "debug": "node --inspect-brk src/index.js"
   },
   "devDependencies": {
