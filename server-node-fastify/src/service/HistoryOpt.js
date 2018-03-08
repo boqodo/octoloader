@@ -28,7 +28,8 @@ class HistoryOpt {
         isLocalCover: res.isLocalCover,
         total: sumTotal(res.seasons),
         seasons: res.seasons.length,
-        time: Date.now()
+        time: Date.now(),
+        frequency: 1
       }
       let fun
       if (db.has(SEARCH_HISTORY).value()) {
