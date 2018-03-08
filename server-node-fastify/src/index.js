@@ -3,14 +3,12 @@ const fastify = require('fastify')()
 const providers = require('./provider')
 const fs = require('fs')
 const downloadManager = require('./service/DownloadManager')
+const historyOpt = require('./service/HistoryOpt')
 
+/*
+// websocket
 fastify.register(require('fastify-ws'), {
   library: 'uws' // Use the uws library instead of the default ws library
-})
-fastify.register(require('fastify-sse'), (err) => {
-  if (err) {
-    throw err
-  }
 })
 
 fastify.ready(err => {
@@ -24,19 +22,37 @@ fastify.ready(err => {
     socket.on('close', () => console.log('Client disconnected.'))
   })
 })
+*/
 
-// Declare a route
+// Server-sent events
+fastify.register(require('./plugins/fastify-sse'), (err) => {
+  if (err) {
+    throw err
+  }
+})
+
+// 首页
 fastify.get('/', async (request, reply) => {
   return { hello: 'world' }
 })
+// 获取历史搜索记录
+fastify.get('/api/histories', async (request, reply) => {
+  reply.header('Access-Control-Allow-Origin', '*')
+  let size = request.query.size
+  return historyOpt.getSearchHistories(size || {})
+})
+
+// 根据url 查询匹配的媒体信息
 fastify.get('/api/medias', async (request, reply) => {
   reply.header('Access-Control-Allow-Origin', '*')
   let url = request.query.url
   let p = providers.matchProvider(url)
   let res = await p.getSeasons(url)
+  historyOpt.record(url, res)
   return res
 })
 
+// 根据url 获取图片流
 fastify.get('/api/images', async (request, reply) => {
   reply.header('Access-Control-Allow-Origin', '*')
   let url = request.query.url
@@ -46,6 +62,7 @@ fastify.get('/api/images', async (request, reply) => {
   reply.send(fs.createReadStream(file))
 })
 
+// 复杂请求跨域前的请求允许
 fastify.options('/api/*', async (request, reply) => {
   reply.header('Access-Control-Allow-Origin', '*')
   reply.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
@@ -53,6 +70,7 @@ fastify.options('/api/*', async (request, reply) => {
   reply.send()
 })
 
+// 下载
 fastify.post('/api/download', async (request, reply) => {
   reply.header('Access-Control-Allow-Origin', '*')
   let video = request.body
@@ -63,6 +81,7 @@ fastify.post('/api/download', async (request, reply) => {
   return pp.todoVideos
 })
 
+// sse 连接
 fastify.get('/api/sse', async (request, reply) => {
   reply.header('Access-Control-Allow-Origin', '*')
   downloadManager.start(reply)

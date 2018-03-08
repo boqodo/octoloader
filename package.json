@@ -6,6 +6,7 @@
   "scripts": {
     "client": "cd client-webpack-vue && yarn run dev",
     "sever":"cd server-node-fastify && yarn run start",
+    "sever-debug":"cd server-node-fastify && yarn run debug",
     "dev":"concurrently \"npm run client\" \"npm run sever\""
   }
 }

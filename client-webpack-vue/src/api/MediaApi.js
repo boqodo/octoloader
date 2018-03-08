@@ -8,6 +8,10 @@ class MediaApi {
   downloadVideo (videoItem) {
     return axios.post(`/download`, videoItem).then(resp => resp.data)
   }
+
+  querySearchHistories (size) {
+    return axios.get(`/histories?size=${size}`).then(resp => resp.data)
+  }
 }
 
 export default new MediaApi()
