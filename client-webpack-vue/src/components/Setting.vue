@@ -103,6 +103,7 @@ export default {
       },
       config: {
         savedir: './download',
+        rootdir: '',
         parallels: 1,
         cpus: 3,
         pixel: 1080,

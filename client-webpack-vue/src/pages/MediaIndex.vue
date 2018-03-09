@@ -18,7 +18,7 @@
               <a @click="changeTab(index)" @dblclick="openUrl(season.link)">
                 <div class="tags has-addons">
                   <span class="tag">{{season.name}}</span>
-                  <span class="tag is-success">{{season.total}}</span>
+                  <span class="tag is-success">{{season.curTotal+" / "+ season.total}}</span>
                 </div>
               </a>
             </li>
@@ -74,6 +74,11 @@
             <div class="column" v-else></div>
           </div>
         </section>
+
+        <div class="video-content-empty is-size-3 has-text-white has-text-weight-bold has-text-centered"
+          v-if="!curSeasonVideos">
+          <span>无内容，请搜索！</span>
+        </div>
       </div>
       <div class="video-footer">
 
@@ -109,6 +114,7 @@ export default {
           {
             name: '',
             total: 0,
+            curTotal: 0,
             link: '',
             uuid: 0,
             videos: [
@@ -170,12 +176,16 @@ export default {
   },
   computed: {
     curSeasonVideos () {
-      let vs = this.entity.seasons[this.selectedIndex].videos
-      let mod = 5 - (vs.length % 5 || 5)
-      while (mod--) {
-        vs.push({})
+      if (this.entity.seasons) {
+        let vs = this.entity.seasons[this.selectedIndex].videos
+        let mod = 5 - (vs.length % 5 || 5)
+        while (mod--) {
+          vs.push({})
+        }
+        return vs
+      } else {
+        this.research()
       }
-      return vs
     }
   }
 }
@@ -208,6 +218,7 @@ export default {
 .video-content {
   margin-top: 0.5rem;
   flex: 1;
+  position: relative;
 
   .video-item {
     padding: 0 0.5rem;
@@ -218,6 +229,19 @@ export default {
     bottom: 0.25rem;
     right: 0.25rem;
     position: absolute;
+  }
+
+  .video-content-empty{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    span{
+      margin: 0 auto;
+    }
   }
 }
 

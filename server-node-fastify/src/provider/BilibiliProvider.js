@@ -114,6 +114,7 @@ async function extraVideoItemUrls (sval) {
       _store.link = json.result.link
       _store.uuid = seasonval
       _store.videos = videoItems
+      _store.curTotal = videoItems.length
     }
     _store.extras = {
       seasons: json.result.seasons,
