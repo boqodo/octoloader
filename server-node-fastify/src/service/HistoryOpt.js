@@ -9,12 +9,12 @@ class HistoryOpt {
     this.db = db
   }
   getSearchHistories ({ size = 5 }) {
-    return db.get(SEARCH_HISTORY)
+    return this.db.get(SEARCH_HISTORY)
       .sortBy('time')
       .take(size).values()
   }
   record (url, res) {
-    let find = db.get(SEARCH_HISTORY).find({url: url})
+    let find = this.db.get(SEARCH_HISTORY).find({url: url})
     let findItem = find.value()
     if (findItem) {
       find.assign({frequency: (findItem.frequency || 1) + 1}).write()
@@ -32,13 +32,13 @@ class HistoryOpt {
         frequency: 1
       }
       let fun
-      if (db.has(SEARCH_HISTORY).value()) {
+      if (this.db.has(SEARCH_HISTORY).value()) {
         fun = item =>
-          db.get(SEARCH_HISTORY)
+          this.db.get(SEARCH_HISTORY)
             .push(item)
             .write()
       } else {
-        fun = item => db.set(SEARCH_HISTORY, [item]).write()
+        fun = item => this.db.set(SEARCH_HISTORY, [item]).write()
       }
       fun(sitem)
     }

@@ -224,7 +224,7 @@ export default {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 1.7625rem); //1.7625rem 是history-label-item的实际高度
   z-index: 2000;
   display: flex;
   flex-direction: column;

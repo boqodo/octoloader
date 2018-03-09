@@ -9,7 +9,7 @@
       "total": 99,
       "seasons": 4,
       "time": 1520494076196,
-      "frequency": 7
+      "frequency": 17
     },
     {
       "title": "欢迎来到实力至上主义的教室",
@@ -20,7 +20,7 @@
       "total": 12,
       "seasons": 1,
       "time": 1520494094085,
-      "frequency": 5
+      "frequency": 9
     },
     {
       "title": "黑色四叶草",
@@ -31,7 +31,7 @@
       "total": 51,
       "seasons": 1,
       "time": 1520495425754,
-      "frequency": 5
+      "frequency": 10
     },
     {
       "title": "刀使巫女",
@@ -42,7 +42,18 @@
       "total": 24,
       "seasons": 1,
       "time": 1520498272736,
-      "frequency": 2
+      "frequency": 7
+    },
+    {
+      "title": "紫罗兰永恒花园",
+      "name": "",
+      "url": "https://www.bilibili.com/bangumi/play/ep173286",
+      "cover": "http://i0.hdslb.com/bfs/archive/a1e58bbfd2619ae7fdb0424bb8eb1bb9609e8eb0.jpg",
+      "isLocalCover": true,
+      "total": 13,
+      "seasons": 1,
+      "time": 1520519429634,
+      "frequency": 5
     }
   ]
 }

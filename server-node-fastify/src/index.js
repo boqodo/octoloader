@@ -4,6 +4,7 @@ const providers = require('./provider')
 const fs = require('fs')
 const downloadManager = require('./service/DownloadManager')
 const historyOpt = require('./service/HistoryOpt')
+const configOpt = require('./service/ConfigOpt')
 
 /*
 // websocket
@@ -30,21 +31,31 @@ fastify.register(require('./plugins/fastify-sse'), (err) => {
     throw err
   }
 })
+fastify.register(require('./plugins/fastify-cors'), {allowOrigin: ['http://localhost:8080', 'http://localhost:8081']})
 
 // 首页
 fastify.get('/', async (request, reply) => {
   return { hello: 'world' }
 })
+// 获取基础配置信息
+fastify.get('/api/config', async (request, reply) => {
+  return configOpt.getConfig()
+})
+// 更新基础配置信息
+fastify.post('/api/config', async (request, reply) => {
+  let config = request.body
+  configOpt.updateConfig(config)
+  reply.send()
+})
+
 // 获取历史搜索记录
 fastify.get('/api/histories', async (request, reply) => {
-  reply.header('Access-Control-Allow-Origin', '*')
   let size = request.query.size
   return historyOpt.getSearchHistories(size || {})
 })
 
 // 根据url 查询匹配的媒体信息
 fastify.get('/api/medias', async (request, reply) => {
-  reply.header('Access-Control-Allow-Origin', '*')
   let url = request.query.url
   let p = providers.matchProvider(url)
   let res = await p.getSeasons(url)
@@ -54,7 +65,6 @@ fastify.get('/api/medias', async (request, reply) => {
 
 // 根据url 获取图片流
 fastify.get('/api/images', async (request, reply) => {
-  reply.header('Access-Control-Allow-Origin', '*')
   let url = request.query.url
   let coverUrl = request.query.cover
   let p = providers.matchProvider(url)
@@ -72,7 +82,6 @@ fastify.options('/api/*', async (request, reply) => {
 
 // 下载
 fastify.post('/api/download', async (request, reply) => {
-  reply.header('Access-Control-Allow-Origin', '*')
   let video = request.body
   let url = video.url
   let p = providers.matchProvider(url)
@@ -83,7 +92,6 @@ fastify.post('/api/download', async (request, reply) => {
 
 // sse 连接
 fastify.get('/api/sse', async (request, reply) => {
-  reply.header('Access-Control-Allow-Origin', '*')
   downloadManager.start(reply)
   reply.sse('start', {event: event => {
     if (event.hasOwnProperty('event')) {

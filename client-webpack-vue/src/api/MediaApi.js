@@ -12,6 +12,12 @@ class MediaApi {
   querySearchHistories (size) {
     return axios.get(`/histories?size=${size}`).then(resp => resp.data)
   }
+  getConfig () {
+    return axios.get('/config').then(resp => resp.data)
+  }
+  updateConfig (config) {
+    return axios.post('/config', config).then(resp => resp.data)
+  }
 }
 
 export default new MediaApi()

@@ -17,7 +17,7 @@
           <div class="field-body">
             <div class="field">
               <div class="control">
-                <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径">
+                <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径" v-model="config.savedir">
               </div>
             </div>
           </div>
@@ -31,11 +31,8 @@
             <div class="field is-narrow">
               <div class="control">
                 <div class="select is-fullwidth">
-                  <select>
-                    <option>1</option>
-                    <option>2</option>
-                    <option>3</option>
-                    <option>4</option>
+                  <select v-model="config.parallels">
+                    <option v-for="n in maxParallel" :value="n" :key="n">{{n}}</option>
                   </select>
                 </div>
               </div>
@@ -51,10 +48,8 @@
             <div class="field is-narrow">
               <div class="control">
                 <div class="select is-fullwidth">
-                  <select>
-                    <option>超高清</option>
-                    <option>高清</option>
-                    <option>普通</option>
+                  <select v-model="config.pixel">
+                    <option v-for="p in pixels" :key="p" :value="p">{{pixelName(p)}}</option>
                   </select>
                 </div>
               </div>
@@ -70,10 +65,10 @@
             <div class="field is-narrow">
               <div class="control">
                 <label class="radio">
-                  <input type="radio" name="member"> 是
+                  <input type="radio" value="true" v-model="config.isAutoMerge"> 是
                 </label>
                 <label class="radio">
-                  <input type="radio" name="member"> 否
+                  <input type="radio" value="false" v-model="config.isAutoMerge"> 否
                 </label>
               </div>
             </div>
@@ -85,21 +80,69 @@
 </template>
 
 <script>
+import mediaApi from '../api/MediaApi'
 export default {
   name: 'Setting',
+  created () {
+    mediaApi
+      .getConfig()
+      .then(res => {
+        this.config = res
+      })
+      .catch(err => {
+        console.error(err)
+      })
+  },
   data () {
     return {
-      isShow: false
+      isShow: false,
+      ps: {
+        1080: '超清',
+        720: '高清',
+        360: '普通'
+      },
+      config: {
+        savedir: './download',
+        parallels: 1,
+        cpus: 3,
+        pixel: 1080,
+        isAutoMerge: false
+      }
+    }
+  },
+  watch: {
+    'config.isAutoMerge' (newValue, oldValue) {
+      this.config.isAutoMerge = /^true$/i.test(newValue)
     }
   },
   methods: {
     toggle () {
-      this.isShow = !this.isShow
+      if (this.isShow) {
+        mediaApi
+          .updateConfig(this.config)
+          .then(res => {
+            this.isShow = false
+          })
+          .catch(err => {
+            console.error(err)
+          })
+      } else {
+        this.isShow = true
+      }
+    },
+    pixelName (p) {
+      return this.ps[p]
     }
   },
   computed: {
     changeIcon () {
       return this.isShow ? 'fa-times' : 'fa-cog'
+    },
+    maxParallel () {
+      return Number.parseInt(this.config.cpus * 1.5)
+    },
+    pixels () {
+      return Object.keys(this.ps)
     }
   }
 }

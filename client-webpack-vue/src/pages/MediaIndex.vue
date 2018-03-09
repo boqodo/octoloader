@@ -42,8 +42,13 @@
                   </div>
                   <div class="video-item-name" :title="item.name">
                     <div class="video-item-name-cell">
-                      <span>{{videoName(item.name)}}</span>
+                      <span>{{videoName(item)}}</span>
                     </div>
+                  </div>
+                  <div class="video-item-signals">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                   </div>
                 </div>
                 <div class="video-item-status">
@@ -51,15 +56,13 @@
                 </div>
               </div>
               <div class="video-shade has-text-centered">
-                <div class="play has-text-dark is-size-1"
-                  @click="openUrl(item.url)">
+                <div class="play has-text-dark is-size-1" @click="openUrl(item.url)">
                   <span class="icon is-large">
                     <i class="fa fa-play" aria-hidden="true"></i>
                   </span>
                 </div>
                 <div class="download is-size-4">
-                  <a class="button is-success"
-                    @click="downloadVideo(item)">
+                  <a class="button is-success" @click="downloadVideo(item)">
                     <span class="icon is-large">
                       <i class="fa fa-cloud-download" aria-hidden="true"></i>
                     </span>
@@ -148,8 +151,8 @@ export default {
           this.searchStatus.message = err
         })
     },
-    videoName (name) {
-      return name
+    videoName (videoItem) {
+      return videoItem.name || `第 ${videoItem.num} 话`
     },
     downloadVideo (videoItem) {
       this.$store.dispatch('addDownloadItem', videoItem)
@@ -288,6 +291,30 @@ export default {
 }
 .card:hover > .video-shade {
   visibility: visible;
+}
+
+.video-item-signals {
+  position: absolute;
+  bottom: 0.825rem;
+  right: 0.5rem;
+  display: flex;
+  flex-direction: column;
+
+  span {
+    width: 0.25rem;
+    height: 0.25rem;
+    background-color: red;
+    border-radius: 50%;
+    margin-top: 0.25rem;
+    &:last-of-type {
+      background-color: #4caf50;
+      margin-bottom: 0.25rem;
+    }
+
+    &:first-of-type {
+      background-color: #03a9f4;
+    }
+  }
 }
 
 .video-footer {
