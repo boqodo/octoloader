@@ -9,12 +9,14 @@
     "fastify": "^1.0.0-rc.2",
     "fastify-ws": "^0.4.1",
     "lowdb": "^1.0.0",
+    "opn": "^5.2.0",
     "pino": "^4.13.0",
-    "r2": "^2.0.0"
+    "r2": "^2.0.0",
+    "systeminformation": "^3.37.4"
   },
   "scripts": {
     "start": "nodemon --watch src src/index.js",
-    "dev":"node src/index.js",
+    "dev": "node src/index.js",
     "debug": "node --inspect-brk src/index.js"
   },
   "devDependencies": {

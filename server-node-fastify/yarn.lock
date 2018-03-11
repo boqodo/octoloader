@@ -565,22 +565,15 @@ fast-levenshtein@~2.0.4:
   version "2.0.6"
   resolved "http://registry.npm.taobao.org/fast-levenshtein/download/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
 
-fast-safe-stringify@^1.0.8, fast-safe-stringify@^1.2.0, fast-safe-stringify@^1.2.3:
+fast-safe-stringify@^1.0.8, fast-safe-stringify@^1.2.3:
   version "1.2.3"
   resolved "http://registry.npm.taobao.org/fast-safe-stringify/download/fast-safe-stringify-1.2.3.tgz#9fe22c37fb2f7f86f06b8f004377dbf8f1ee7bc1"
 
-fastify-plugin@^0.1.0, fastify-plugin@^0.1.1:
+fastify-plugin@^0.1.1:
   version "0.1.1"
   resolved "http://registry.npm.taobao.org/fastify-plugin/download/fastify-plugin-0.1.1.tgz#13a94f495a90fd5a7ae4bcd827c54ea5986c794f"
   dependencies:
     semver "^5.3.0"
-
-fastify-sse@^0.1.5:
-  version "0.1.5"
-  resolved "http://registry.npm.taobao.org/fastify-sse/download/fastify-sse-0.1.5.tgz#f2213da8396f94ad6dd9ee59b9480e12b8288e04"
-  dependencies:
-    fast-safe-stringify "^1.2.0"
-    fastify-plugin "^0.1.0"
 
 fastify-ws@^0.4.1:
   version "0.4.1"
@@ -846,6 +839,10 @@ is-typedarray@^1.0.0:
   version "1.0.0"
   resolved "http://registry.npm.taobao.org/is-typedarray/download/is-typedarray-1.0.0.tgz#e479c80858df0c1b11ddda6940f96011fcda4a9a"
 
+is-wsl@^1.1.0:
+  version "1.1.0"
+  resolved "http://registry.npm.taobao.org/is-wsl/download/is-wsl-1.1.0.tgz#1f16e4aa22b04d1336b66188a66af3c600c3a66d"
+
 isarray@^1.0.0, isarray@~1.0.0:
   version "1.0.0"
   resolved "http://registry.npm.taobao.org/isarray/download/isarray-1.0.0.tgz#bb935d48582cba168c06834957a54a3e07124f11"
@@ -1029,6 +1026,12 @@ onetime@^2.0.0:
   resolved "http://registry.npm.taobao.org/onetime/download/onetime-2.0.1.tgz#067428230fd67443b2794b22bba528b6867962d4"
   dependencies:
     mimic-fn "^1.0.0"
+
+opn@^5.2.0:
+  version "5.2.0"
+  resolved "http://registry.npm.taobao.org/opn/download/opn-5.2.0.tgz#71fdf934d6827d676cecbea1531f95d354641225"
+  dependencies:
+    is-wsl "^1.1.0"
 
 optionator@^0.8.2:
   version "0.8.2"
@@ -1431,6 +1434,10 @@ supports-color@^5.2.0:
   resolved "http://registry.npm.taobao.org/supports-color/download/supports-color-5.2.0.tgz#b0d5333b1184dd3666cbe5aa0b45c5ac7ac17a4a"
   dependencies:
     has-flag "^3.0.0"
+
+systeminformation@^3.37.4:
+  version "3.37.4"
+  resolved "http://registry.npm.taobao.org/systeminformation/download/systeminformation-3.37.4.tgz#9112907e101047610751c86281a230d096003a8f"
 
 table@^4.0.1:
   version "4.0.3"

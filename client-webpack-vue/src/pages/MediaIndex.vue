@@ -178,6 +178,7 @@ export default {
     curSeasonVideos () {
       if (this.entity.seasons) {
         let vs = this.entity.seasons[this.selectedIndex].videos
+        vs = vs.slice()
         let mod = 5 - (vs.length % 5 || 5)
         while (mod--) {
           vs.push({})

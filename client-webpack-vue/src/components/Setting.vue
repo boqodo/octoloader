@@ -15,10 +15,31 @@
             <label class="label">文件存放路径</label>
           </div>
           <div class="field-body">
-            <div class="field">
-              <div class="control">
-                <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径" v-model="config.savedir">
+            <div class="field is-expanded">
+              <div class="field has-addons">
+                <p class="control">
+                  <span class="select">
+                    <select v-model="pathMode">
+                      <option v-bind:value=0>相对路径</option>
+                      <option v-bind:value=1>绝对路径</option>
+                    </select>
+                  </span>
+                </p>
+                <p class="control" v-if="pathMode === 0">
+                  <a class="button is-static">
+                    {{config.rootdir}}
+                  </a>
+                </p>
+                <p class="control is-expanded">
+                  <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径" v-model="config.savedir">
+                </p>
+                <p class="control">
+                  <a class="button is-warning" title="点击打开文件夹">
+                    可用空间11GB
+                  </a>
+                </p>
               </div>
+              <p class="help">{{saveDirRealPath}}</p>
             </div>
           </div>
         </div>
@@ -74,6 +95,44 @@
             </div>
           </div>
         </div>
+
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <label class="label">是否删除原分片文件?</label>
+          </div>
+          <div class="field-body">
+            <div class="field is-narrow">
+              <div class="control">
+                <label class="radio">
+                  <input type="radio" value="true" v-model="config.isAutoClear"> 是
+                </label>
+                <label class="radio">
+                  <input type="radio" value="false" v-model="config.isAutoClear"> 否
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <!-- 都存在同一个文件夹，还是不同的动画片分开，同时同一动画片下是否放在一起，是否需要文件夹包含-->
+            <label class="label">是否各剧文件独立存放?</label>
+          </div>
+          <div class="field-body">
+            <div class="field is-narrow">
+              <div class="control">
+                <label class="radio">
+                  <input type="radio" value="true" v-model="config.isAutoClear"> 是
+                </label>
+                <label class="radio">
+                  <input type="radio" value="false" v-model="config.isAutoClear"> 否
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </transition>
   </div>
@@ -87,7 +146,8 @@ export default {
     mediaApi
       .getConfig()
       .then(res => {
-        this.config = res
+        this.config = res.config
+        this.sysenv = res.sysenv
       })
       .catch(err => {
         console.error(err)
@@ -96,6 +156,7 @@ export default {
   data () {
     return {
       isShow: false,
+      pathMode: 0,
       ps: {
         1080: '超清',
         720: '高清',
@@ -108,6 +169,9 @@ export default {
         cpus: 3,
         pixel: 1080,
         isAutoMerge: false
+      },
+      sysenv: {
+
       }
     }
   },
@@ -144,6 +208,9 @@ export default {
     },
     pixels () {
       return Object.keys(this.ps)
+    },
+    saveDirRealPath () {
+      return this.config.rootdir + this.config.savedir
     }
   }
 }

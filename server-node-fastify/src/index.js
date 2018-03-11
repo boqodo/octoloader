@@ -1,7 +1,10 @@
+
 // Require the framework and instantiate it
 const fastify = require('fastify')()
 const providers = require('./provider')
 const fs = require('fs')
+const si = require('systeminformation')
+const open = require('opn')
 const downloadManager = require('./service/DownloadManager')
 const historyOpt = require('./service/HistoryOpt')
 const configOpt = require('./service/ConfigOpt')
@@ -26,26 +29,52 @@ fastify.ready(err => {
 */
 
 // Server-sent events
-fastify.register(require('./plugins/fastify-sse'), (err) => {
+fastify.register(require('./plugins/fastify-sse'), err => {
   if (err) {
     throw err
   }
 })
-fastify.register(require('./plugins/fastify-cors'), {allowOrigin: ['http://localhost:8080', 'http://localhost:8081']})
+fastify.register(require('./plugins/fastify-cors'), {
+  allowOrigin: ['http://localhost:8080', 'http://localhost:8081']
+})
 
 // 首页
 fastify.get('/', async (request, reply) => {
-  return { hello: 'world' }
+  let d = await si.blockDevices()
+  let s = await si.fsSize()
+  return { hello: 'world', d: d, s: s }
 })
 // 获取基础配置信息
 fastify.get('/api/config', async (request, reply) => {
-  return configOpt.getConfig()
+  let config = configOpt.getConfig()
+  let sysenv = {
+    devices: await si.fsSize()
+  }
+  return {config: config, sysenv: sysenv}
 })
 // 更新基础配置信息
 fastify.post('/api/config', async (request, reply) => {
   let config = request.body
   configOpt.updateConfig(config)
   reply.send()
+})
+
+// 打开文件，使用opn
+fastify.get('/api/filesystem/open', async (request, reply) => {
+  let target = request.query.target
+  open(target)
+  reply.send()
+})
+// 读取文件层级结构
+fastify.get('/api/filesystem/file', async (request, reply) => {
+  let dir = request.query.dir
+  // TODO： 过滤文件，只保留文件夹
+  fs.readdir(dir, (err, files) => {
+    if (err) {
+      reply.send(err)
+    }
+    reply.send(files)
+  })
 })
 
 // 获取历史搜索记录
@@ -75,7 +104,10 @@ fastify.get('/api/images', async (request, reply) => {
 // 复杂请求跨域前的请求允许
 fastify.options('/api/*', async (request, reply) => {
   reply.header('Access-Control-Allow-Origin', '*')
-  reply.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+  reply.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  )
   reply.header('Access-Control-Allow-Methods', 'POST, PUT')
   reply.send()
 })
@@ -93,14 +125,16 @@ fastify.post('/api/download', async (request, reply) => {
 // sse 连接
 fastify.get('/api/sse', async (request, reply) => {
   downloadManager.start(reply)
-  reply.sse('start', {event: event => {
-    if (event.hasOwnProperty('event')) {
-      const eventName = event.event
-      delete event.event
-      return eventName
+  reply.sse('start', {
+    event: event => {
+      if (event.hasOwnProperty('event')) {
+        const eventName = event.event
+        delete event.event
+        return eventName
+      }
+      return 'message'
     }
-    return 'message'
-  }})
+  })
 })
 
 // Run the server!
