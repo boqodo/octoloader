@@ -18,6 +18,13 @@ class MediaApi {
   updateConfig (config) {
     return axios.post('/config', config).then(resp => resp.data)
   }
+
+  openSystemFile (target) {
+    return axios.get(`filesystem/open?target=${target}`).then(resp => resp.data)
+  }
+  findSystemFile (dir, isOnlyDir, isOnlyFile) {
+    return axios.get(`filesystem/file?dir=${dir || ''}`).then(resp => resp.data)
+  }
 }
 
 export default new MediaApi()

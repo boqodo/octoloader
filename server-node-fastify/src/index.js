@@ -1,13 +1,14 @@
-
 // Require the framework and instantiate it
 const fastify = require('fastify')()
 const providers = require('./provider')
 const fs = require('fs')
+const path = require('path')
 const si = require('systeminformation')
 const open = require('opn')
 const downloadManager = require('./service/DownloadManager')
 const historyOpt = require('./service/HistoryOpt')
 const configOpt = require('./service/ConfigOpt')
+const fileSystemOpt = require('./service/FileSystemOpt')
 
 /*
 // websocket
@@ -40,9 +41,7 @@ fastify.register(require('./plugins/fastify-cors'), {
 
 // 首页
 fastify.get('/', async (request, reply) => {
-  let d = await si.blockDevices()
-  let s = await si.fsSize()
-  return { hello: 'world', d: d, s: s }
+  return { hello: 'world' }
 })
 // 获取基础配置信息
 fastify.get('/api/config', async (request, reply) => {
@@ -50,7 +49,7 @@ fastify.get('/api/config', async (request, reply) => {
   let sysenv = {
     devices: await si.fsSize()
   }
-  return {config: config, sysenv: sysenv}
+  return { config: config, sysenv: sysenv }
 })
 // 更新基础配置信息
 fastify.post('/api/config', async (request, reply) => {
@@ -68,13 +67,24 @@ fastify.get('/api/filesystem/open', async (request, reply) => {
 // 读取文件层级结构
 fastify.get('/api/filesystem/file', async (request, reply) => {
   let dir = request.query.dir
-  // TODO： 过滤文件，只保留文件夹
-  fs.readdir(dir, (err, files) => {
-    if (err) {
-      reply.send(err)
-    }
-    reply.send(files)
-  })
+  if (!dir) {
+    return fileSystemOpt.initTree
+  } else {
+    let isOnlyDir = request.query.isOnlyDir
+    let isOnlyFile = request.query.isOnlyFile
+    fs.readdir(dir, (err, files) => {
+      if (err) {
+        reply.send(err)
+      }
+      let filter
+      if (isOnlyDir) {
+        filter = f => fs.statSync(f).isDirectory()
+      } else if (isOnlyFile) {
+        filter = f => fs.statSync(f).isFile()
+      }
+      reply.send(filter ? files.filter(f => filter(path.join(dir, f))) : files)
+    })
+  }
 })
 
 // 获取历史搜索记录

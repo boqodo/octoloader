@@ -1,5 +1,6 @@
 <template>
   <div class="setting-container">
+    <file-select-dialog :isOpenFileChooserDialog="isOpenFileChooserDialog" @close="isOpenFileChooserDialog = false"/>
     <div class="setting-button button" @click="toggle">
       <div class="is-size-2 has-text-centered">
         <span class="icon">
@@ -9,7 +10,6 @@
     </div>
     <transition name="fade">
       <div class="setting-form" v-show="isShow">
-
         <div class="field is-horizontal">
           <div class="field-label is-normal">
             <label class="label">文件存放路径</label>
@@ -31,10 +31,13 @@
                   </a>
                 </p>
                 <p class="control is-expanded">
-                  <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径" v-model="config.savedir">
+                  <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径"
+                    ref="savedir"
+                    v-model="config.savedir"
+                    @focus="toggleFileChooserDialog">
                 </p>
                 <p class="control">
-                  <a class="button is-warning" title="点击打开文件夹">
+                  <a class="button is-warning" title="点击打开文件夹" @click="openSaveDir">
                     可用空间11GB
                   </a>
                 </p>
@@ -123,10 +126,10 @@
             <div class="field is-narrow">
               <div class="control">
                 <label class="radio">
-                  <input type="radio" value="true" v-model="config.isAutoClear"> 是
+                  <input type="radio" value="true" v-model="config.isDepend"> 是
                 </label>
                 <label class="radio">
-                  <input type="radio" value="false" v-model="config.isAutoClear"> 否
+                  <input type="radio" value="false" v-model="config.isDepend"> 否
                 </label>
               </div>
             </div>
@@ -139,9 +142,22 @@
 </template>
 
 <script>
+import FileSelectDialog from '@/components/FileSelectDialog'
 import mediaApi from '../api/MediaApi'
 export default {
   name: 'Setting',
+  components: {
+    FileSelectDialog
+  },
+  directives: {
+    focus: {
+      update: function (el, {value}) {
+        if (value) {
+          el.focus()
+        }
+      }
+    }
+  },
   created () {
     mediaApi
       .getConfig()
@@ -156,6 +172,7 @@ export default {
   data () {
     return {
       isShow: false,
+      isOpenFileChooserDialog: false,
       pathMode: 0,
       ps: {
         1080: '超清',
@@ -163,7 +180,7 @@ export default {
         360: '普通'
       },
       config: {
-        savedir: './download',
+        savedir: '/download',
         rootdir: '',
         parallels: 1,
         cpus: 3,
@@ -197,6 +214,21 @@ export default {
     },
     pixelName (p) {
       return this.ps[p]
+    },
+    toggleFileChooserDialog () {
+      this.isOpenFileChooserDialog = !this.isOpenFileChooserDialog
+      this.$refs.savedir.blur()
+    },
+    openSaveDir () {
+      let target = this.pathMode === 0 ? this.rootdir + this.savedir : this.savedir
+      mediaApi
+        .openSystemFile(target)
+        .then(res => {
+
+        })
+        .catch(err => {
+          console.error(err)
+        })
     }
   },
   computed: {
