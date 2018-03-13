@@ -745,7 +745,7 @@ htmlparser2@^3.9.1:
     inherits "^2.0.1"
     readable-stream "^2.0.2"
 
-iconv-lite@^0.4.17:
+iconv-lite@^0.4.17, iconv-lite@^0.4.19:
   version "0.4.19"
   resolved "http://registry.npm.taobao.org/iconv-lite/download/iconv-lite-0.4.19.tgz#f7468f60135f5e5dad3399c0a81be9a1603a082b"
 
@@ -1435,9 +1435,11 @@ supports-color@^5.2.0:
   dependencies:
     has-flag "^3.0.0"
 
-systeminformation@^3.37.4:
-  version "3.37.4"
-  resolved "http://registry.npm.taobao.org/systeminformation/download/systeminformation-3.37.4.tgz#9112907e101047610751c86281a230d096003a8f"
+"systeminformation@git+https://github.com/boqodo/systeminformation.git":
+  version "3.37.6"
+  resolved "git+https://github.com/boqodo/systeminformation.git#af3d053acd32a2c064ea824264449fd89f8db9bb"
+  dependencies:
+    iconv-lite "^0.4.19"
 
 table@^4.0.1:
   version "4.0.3"

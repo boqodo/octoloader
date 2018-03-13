@@ -7,7 +7,11 @@
         <button class="delete" aria-label="close" @click="close"></button>
       </header>
       <section class="modal-card-body">
-        <vue-tree :tree-data="treeData" v-model="ids" :options="options"/>
+        <vue-tree
+        v-model="ids"
+        :tree-data="treeData"
+        :options="options"
+        @handle="handle"/>
       </section>
       <footer class="modal-card-foot">
         <div class="dialog-opts">
@@ -38,16 +42,18 @@ export default {
   },
   data () {
     return {
-      ids: [4],
+      ids: [],
+      curSelectedItem: undefined,
       options: {
         label: 'label',
         checkbox: false,
         checkedOpen: false,
         folderBold: false,
         idsWithParent: false,
-        depthOpen: 2,
+        depthOpen: 1,
         openIcon: 'fa fa-angle-right',
         closeIcon: 'fa fa-angle-down',
+        loadIcon: 'fa fa-spinner',
         halfCheckedIcon: 'fa fa-minus-square-o fa-fw text-primary',
         checkedIcon: 'fa fa-check-square-o fa-fw text-danger',
         uncheckedIcon: 'fa fa-square-o fa-fw'
@@ -64,6 +70,13 @@ export default {
   methods: {
     close () {
       this.$emit('close')
+    },
+    handle (item) {
+      if (this.curSelectedItem) {
+        this.curSelectedItem.isSelected = false
+      }
+      this.curSelectedItem = item
+      this.curSelectedItem.isSelected = true
     }
   },
   computed: {

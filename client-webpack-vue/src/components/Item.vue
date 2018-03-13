@@ -18,13 +18,15 @@
         :class="[labelIcon, labelStatus]"
         @click="toggleChecked"
       />
-      <span
-        class="item-label"
-        :class="isBold"
-        @click="handle"
-      >
-        {{ model[options.label] }}
-      </span>
+      <div class="item-label-container" :class="isSelected">
+        <div :class="itemIcon"></div>
+        <span
+          class="item-label"
+          :class="[isBold]"
+          @click="handle">
+          {{ model[options.label] }}
+        </span>
+      </div>
     </div>
     <ul v-if="isFolder" v-show="open" class="vue-tree-list">
       <tree-item
@@ -103,7 +105,16 @@ export default {
 
   computed: {
     toggleIcon () {
-      return this.open ? this.options.closeIcon : this.options.openIcon
+      if (this.open === null) {
+        return this.options.loadIcon
+      } else if (this.open === undefined) {
+        return ''
+      } else {
+        return this.open ? this.options.closeIcon : this.options.openIcon
+      }
+    },
+    itemIcon () {
+      return 'item-icon-' + this.model.icon
     },
 
     labelIcon () {
@@ -127,7 +138,7 @@ export default {
     },
 
     isFolder () {
-      return this.model.children && this.model.children.length
+      return this.model.children
     },
 
     isBold () {
@@ -135,11 +146,15 @@ export default {
         'item-bold': this.isFolder && this.options.folderBold
       }
     },
+    isSelected () {
+      return this.model.isSelected ? 'item-label-container-selected' : ''
+    },
 
     self () {
-      let self = Object.assign({}, this.model, {children: []})
-      delete self.children
-      return self
+      // let self = Object.assign({}, this.model, {children: []})
+      // delete self.children
+      // return self
+      return this.model
     }
   },
 
@@ -181,7 +196,27 @@ export default {
   methods: {
     toggle () {
       if (this.isFolder) {
-        this.open = !this.open
+        if (this.open) {
+          this.open = false
+        } else {
+          let dir = this.model.path
+          if (!dir) {
+            this.open = true
+            return
+          }
+          this.open = null
+          this.$http.get(`filesystem/file?dir=${dir || ''}&isOnlyDir=true`).then(resp => {
+            if (resp.data && resp.data.length) {
+              this.model.children = resp.data
+              this.open = true
+            } else {
+              this.model.children = undefined
+              this.open = undefined
+            }
+          }).catch(err => {
+            console.err(err)
+          })
+        }
       }
     },
 

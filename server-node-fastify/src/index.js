@@ -73,6 +73,8 @@ fastify.get('/api/filesystem/file', async (request, reply) => {
     let isOnlyDir = request.query.isOnlyDir
     let isOnlyFile = request.query.isOnlyFile
     fs.readdir(dir, (err, files) => {
+      files = files || []
+      files = files.filter(f => !f.startsWith('.') && !f.startsWith('$') && f !== 'System Volume Information')
       if (err) {
         reply.send(err)
       }
@@ -82,7 +84,16 @@ fastify.get('/api/filesystem/file', async (request, reply) => {
       } else if (isOnlyFile) {
         filter = f => fs.statSync(f).isFile()
       }
-      reply.send(filter ? files.filter(f => filter(path.join(dir, f))) : files)
+      let ffs = filter ? files.filter(f => filter(path.join(dir, f))) : files
+      reply.send(ffs.map(f => {
+        return { label: f,
+          id: 1,
+          icon: 'Dirtory',
+          path: path.join(dir, f),
+          children: [],
+          isSelected: false
+        }
+      }))
     })
   }
 })
