@@ -1,24 +1,24 @@
 <template>
   <li class="vue-tree-item">
     <div class="item-wrapper" onselectstart="return false;">
-      <span
-        v-if="isFolder"
-        class="item-toggle"
-        @click="toggle"
-      >
-        <i :class="[toggleIcon]"></i>
-      </span>
-      <span
-        v-else
-        class="item-toggle"
-      />
-      <span
-        v-if="options.checkbox"
-        class="item-checkbox"
-        :class="[labelIcon, labelStatus]"
-        @click="toggleChecked"
-      />
       <div class="item-label-container" :class="isSelected">
+        <span
+          v-if="isFolder"
+          class="item-toggle"
+          @click="toggle"
+        >
+          <i :class="[toggleIcon]"></i>
+        </span>
+        <span
+          v-else
+          class="item-toggle"
+        />
+        <span
+          v-if="options.checkbox"
+          class="item-checkbox"
+          :class="[labelIcon, labelStatus]"
+          @click="toggleChecked"
+        />
         <div :class="itemIcon"></div>
         <span
           class="item-label"

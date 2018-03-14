@@ -1,9 +1,11 @@
 const Provider = require('./Provider')
+const userAgent = require('../utils/useragents')
 const r2 = require('r2')
 const fs = require('fs')
 const path = require('path')
 const { URL, URLSearchParams } = require('url')
 const cheerio = require('cheerio')
+const pageNum = 50
 
 class IQiyiProvider extends Provider {
   static match (url) {
@@ -22,25 +24,53 @@ class IQiyiProvider extends Provider {
 async function getSeasonUrls (url) {
   let resobj = {}
   let album = await getAlbum(url)
-
   resobj.title = album.title
+  let seasons = []
 
-  let aurl = `http://cache.video.iqiyi.com/jp/avlist/${album.id}/1/50/?albumId=${album.id}&pageNum=50&pageNo=1`
-  let text = await r2(aurl).text
+  let pageNo = 1
+  let season = await parseSeason(album, pageNo)
+  let pageNos = Math.ceil(season.total / pageNum)
+  let promises = []
+  for (let i = 2; i <= pageNos; i++) {
+    promises.push(parseSeason(album, i))
+  }
+  if (promises.length) {
+    let ress = await Promise.all(promises)
+    seasons = ress
+    seasons.unshift(season)
+    seasons = seasons.map((s, index) => {
+      s.total = pageNum
+      s.name = s.name + '-' + (index + 1)
+      return s
+    })
+  } else {
+    seasons.push(season)
+  }
+
+  resobj.seasons = seasons
+  return resobj
+}
+async function parseSeason (album, pageNo) {
+  let aurl = `http://cache.video.iqiyi.com/jp/avlist/${album.id}/${pageNo}/${pageNum}/?albumId=${album.id}&pageNum=${pageNum}&pageNo=${pageNo}`
+  let text = await r2(aurl, {
+    'User-Agent': userAgent()
+  }).text
   let vchar = 'var tvInfoJs='
   text = text.substring(vchar.length)
   let tvInfoJs = JSON.parse(text)
 
+  let total = tvInfoJs.data.pt
+
   let season = {
     name: album.title,
-    total: tvInfoJs.data.pt,
+    total: total,
     link: album.link
   }
 
   let videos = []
   tvInfoJs.data.vlist.forEach((i, index) => {
     videos.push({
-      name: i.vn || i.shortTitle,
+      name: i.vt || i.vn || i.shortTitle,
       cover: i.vpic,
       url: i.vurl,
       uuid: i.vid,
@@ -49,13 +79,15 @@ async function getSeasonUrls (url) {
     })
   })
   season.videos = videos
-  resobj.seasons = [season]
-  return resobj
+  season.curTotal = videos.length
+  return season
 }
 
 async function getAlbum (url) {
   try {
-    let text = await r2(url).text
+    let text = await r2(url, {
+      'User-Agent': userAgent()
+    }).text
     const $ = cheerio.load(text)
     return {
       id: $('#flashbox').attr('data-player-albumid'),

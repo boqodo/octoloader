@@ -11,6 +11,7 @@ class HistoryOpt {
   getSearchHistories ({ size = 5 }) {
     return this.db.get(SEARCH_HISTORY)
       .sortBy('time')
+      .reverse()
       .take(size).values()
   }
   record (url, res) {

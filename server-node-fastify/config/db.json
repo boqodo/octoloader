@@ -9,7 +9,7 @@
       "total": 99,
       "seasons": 4,
       "time": 1520494076196,
-      "frequency": 26
+      "frequency": 30
     },
     {
       "title": "欢迎来到实力至上主义的教室",
@@ -20,7 +20,7 @@
       "total": 12,
       "seasons": 1,
       "time": 1520494094085,
-      "frequency": 11
+      "frequency": 12
     },
     {
       "title": "黑色四叶草",
@@ -31,7 +31,7 @@
       "total": 51,
       "seasons": 1,
       "time": 1520495425754,
-      "frequency": 13
+      "frequency": 15
     },
     {
       "title": "刀使巫女",
@@ -42,7 +42,7 @@
       "total": 24,
       "seasons": 1,
       "time": 1520498272736,
-      "frequency": 8
+      "frequency": 9
     },
     {
       "title": "紫罗兰永恒花园",
@@ -54,6 +54,105 @@
       "seasons": 1,
       "time": 1520519429634,
       "frequency": 7
+    },
+    {
+      "title": "博多豚骨拉面团",
+      "name": "比赛开始",
+      "url": "https://www.bilibili.com/bangumi/play/ep173339",
+      "cover": "http://i2.hdslb.com/bfs/archive/d4d0c6025e6c4388ff11f32faeda2f6b5a6674b7.jpg",
+      "isLocalCover": true,
+      "total": 12,
+      "seasons": 1,
+      "time": 1521006998613,
+      "frequency": 1
+    },
+    {
+      "title": "汪汪队立大功 第4季",
+      "name": "汪汪队立大功 第4季 第1集 狗狗拯救飞船",
+      "url": "http://www.iqiyi.com/v_19rre0i328.html",
+      "cover": "http://pic8.qiyipic.com/image/20171026/72/d3/v_113772190_m_601.jpg",
+      "isLocalCover": true,
+      "total": 14,
+      "seasons": 1,
+      "time": 1521007030300,
+      "frequency": 6
+    },
+    {
+      "title": "小猪佩奇全集",
+      "name": "粉红猪小妹全集 第1集",
+      "url": "http://www.iqiyi.com/v_19rrl6d4as.html",
+      "cover": "http://pic3.qiyipic.com/image/20170915/9b/ff/v_109926777_m_601_m1.jpg",
+      "isLocalCover": true,
+      "total": 156,
+      "seasons": 1,
+      "time": 1521007736114,
+      "frequency": 19
+    },
+    {
+      "title": "汪汪队立大功全集",
+      "name": "海上救援",
+      "url": "http://www.iqiyi.com/v_19rralnqpo.html",
+      "cover": "http://pic4.qiyipic.com/image/20170923/55/5b/v_111715119_m_601_m1.jpg",
+      "isLocalCover": true,
+      "total": 150,
+      "seasons": 3,
+      "time": 1521011302698,
+      "frequency": 2
+    },
+    {
+      "title": "爱丽和故事",
+      "name": "迪迪的下午茶玩具",
+      "url": "http://www.iqiyi.com/v_19rr9ybrgc.html",
+      "cover": "http://pic7.qiyipic.com/image/20170922/01/f4/v_111591936_m_601_m3.jpg",
+      "isLocalCover": true,
+      "total": 350,
+      "seasons": 7,
+      "time": 1521011791267,
+      "frequency": 2
+    },
+    {
+      "title": "小小智慧树",
+      "name": "《小小智慧树》 20171117",
+      "url": "http://tv.cctv.com/2017/11/17/VIDE1XSNozAAQt22x7FSO5Xu171117.shtml",
+      "cover": "http://p4.img.cctvpic.com/fmspic/2017/11/17/5bf501fb029a4c91b5b5178dc72d8c32-730.jpg?p=2&h=120",
+      "isLocalCover": false,
+      "total": 39,
+      "seasons": 1,
+      "time": 1521011901368,
+      "frequency": 5
+    },
+    {
+      "title": "小小智慧树",
+      "name": "《小小智慧树》 20180228",
+      "url": "http://tv.cctv.com/2018/02/28/VIDEus8n0Vnd6k8t4OGIDEin180228.shtml",
+      "cover": "http://p4.img.cctvpic.com/fmspic/2018/02/28/fe5f17cb42dc4b50901642573eb85b3f-730.jpg?p=2&h=120",
+      "isLocalCover": false,
+      "total": 37,
+      "seasons": 1,
+      "time": 1521012066187,
+      "frequency": 1
+    },
+    {
+      "title": "智慧树",
+      "name": "《智慧树》 20180313",
+      "url": "http://tv.cctv.com/2018/03/13/VIDErTsL7yab70DNNKjE2vxJ180313.shtml",
+      "cover": "http://p2.img.cctvpic.com/fmspic/2018/03/13/b6c6b06a23e94652b7130414f67db588-730.jpg?p=2&h=120",
+      "isLocalCover": false,
+      "total": 26,
+      "seasons": 1,
+      "time": 1521013030520,
+      "frequency": 1
+    },
+    {
+      "title": "英雄出少年",
+      "name": "《英雄出少年》 20180304",
+      "url": "http://tv.cctv.com/2018/03/04/VIDE2O8q0PSPhlFyEuR7NgEz180304.shtml",
+      "cover": "http://p5.img.cctvpic.com/fmspic/2018/03/04/e227cb334d28422f83e5b4ce9daadb13-1450.jpg?p=2&h=120",
+      "isLocalCover": false,
+      "total": 27,
+      "seasons": 1,
+      "time": 1521014204754,
+      "frequency": 3
     }
   ]
 }

@@ -145,5 +145,8 @@ export default {
 .item-label-container{
   display: inline-flex;
   border: 1px solid white;
+  overflow: hidden;
+  text-overflow:ellipsis;
+  white-space: nowrap;
 }
 </style>

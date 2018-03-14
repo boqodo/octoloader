@@ -253,7 +253,7 @@ export default {
 
   .video-item-num {
     background: linear-gradient(90deg, #8e54e9, #4776e6);
-    padding: 0 0.725rem;
+    padding: 0 0.25rem;
   }
   .video-item-name {
     min-width: 12.25rem;

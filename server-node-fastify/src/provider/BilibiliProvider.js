@@ -1,14 +1,11 @@
 const Provider = require('./Provider')
+const userAgent = require('../utils/useragents')
 const { URL } = require('url')
 const r2 = require('r2')
 const fs = require('fs')
 const path = require('path')
 const cheerio = require('cheerio')
 const crypto = require('crypto')
-const HEADERS = {
-  'User-Agent':
-		'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0'
-}
 const BILIBILI_APPKEY = '84956560bc028eb7'
 const BILIBILI_APPSEC = '94aba54af9065f71de72f5508f1cd42e'
 const savedir = 'D:\\ztest-demo'
@@ -158,7 +155,9 @@ async function parsedownloadurl (video) {
   ourl.searchParams.sort()
   let sign = md5(ourl.searchParams.toString() + BILIBILI_APPSEC)
   ourl.searchParams.append('sign', sign)
-  let json = await r2(ourl.href, { HEADERS }).json
+  let json = await r2(ourl.href, {
+    'User-Agent': userAgent()
+  }).json
   let downs = []
   json.durl.forEach((item, index) => {
     let downurl = new URL(item.url)
@@ -190,8 +189,7 @@ async function download (video, reply) {
     if (!downstatus) {
       let headers = {
         Host: downloadurl.host,
-        'User-Agent':
-					'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0',
+        'User-Agent': userAgent(),
         Accept: '*/*',
         'Accept-Language': 'zh-CN,zh;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',

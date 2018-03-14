@@ -15,10 +15,10 @@
       </section>
       <footer class="modal-card-foot">
         <div class="dialog-opts">
-          <button class="button is-primary">新建文件夹</button>
+          <!-- <button class="button is-primary" @click="createDir">新建文件夹</button> -->
         </div>
         <div class="dialog-opts">
-          <button class="button is-success is-right">确定</button>
+          <button class="button is-success is-right" @click="confirm">确定</button>
           <button class="button is-danger is-right" @click="close">取消</button>
         </div>
       </footer>
@@ -77,6 +77,12 @@ export default {
       }
       this.curSelectedItem = item
       this.curSelectedItem.isSelected = true
+    },
+    confirm () {
+      this.$emit('close', this.curSelectedItem.path)
+    },
+    createDir () {
+
     }
   },
   computed: {

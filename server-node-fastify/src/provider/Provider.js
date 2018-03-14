@@ -1,3 +1,4 @@
+const userAgent = require('../utils/useragents')
 const fs = require('fs')
 const r2 = require('r2')
 const path = require('path')
@@ -45,7 +46,9 @@ function download2Disk (coverUrl) {
       fs.statSync(savefile)
       resolve(savefile)
     } catch (e) {
-      let res = await r2(coverUrl).response
+      let res = await r2(coverUrl, {
+        'User-Agent': userAgent()
+      }).response
       let write = fs.createWriteStream(savefile)
 
       res.body.on('error', data => {

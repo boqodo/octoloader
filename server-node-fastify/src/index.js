@@ -61,8 +61,11 @@ fastify.post('/api/config', async (request, reply) => {
 // 打开文件，使用opn
 fastify.get('/api/filesystem/open', async (request, reply) => {
   let target = request.query.target
-  open(target)
-  reply.send()
+  fs.access(target, err => {
+    if (err) reply.send(err)
+    open(target)
+    reply.send()
+  })
 })
 // 读取文件层级结构
 fastify.get('/api/filesystem/file', async (request, reply) => {
@@ -74,7 +77,13 @@ fastify.get('/api/filesystem/file', async (request, reply) => {
     let isOnlyFile = request.query.isOnlyFile
     fs.readdir(dir, (err, files) => {
       files = files || []
-      files = files.filter(f => !f.startsWith('.') && !f.startsWith('$') && f !== 'System Volume Information')
+      files = files.filter(
+        f =>
+          !f.startsWith('.') &&
+					!f.startsWith('$') &&
+					f !== 'System Volume Information' &&
+					!f.endsWith('.tmp')
+      )
       if (err) {
         reply.send(err)
       }
@@ -85,15 +94,18 @@ fastify.get('/api/filesystem/file', async (request, reply) => {
         filter = f => fs.statSync(f).isFile()
       }
       let ffs = filter ? files.filter(f => filter(path.join(dir, f))) : files
-      reply.send(ffs.map(f => {
-        return { label: f,
-          id: 1,
-          icon: 'Dirtory',
-          path: path.join(dir, f),
-          children: [],
-          isSelected: false
-        }
-      }))
+      reply.send(
+        ffs.map(f => {
+          return {
+            label: f,
+            id: 1,
+            icon: 'Dirtory',
+            path: path.join(dir, f),
+            children: [],
+            isSelected: false
+          }
+        })
+      )
     })
   }
 })

@@ -1,6 +1,6 @@
 <template>
   <div class="setting-container">
-    <file-select-dialog :isOpenFileChooserDialog="isOpenFileChooserDialog" @close="isOpenFileChooserDialog = false"/>
+    <file-select-dialog :isOpenFileChooserDialog="isOpenFileChooserDialog" @close="fileChooserDialogClose" />
     <div class="setting-button button" @click="toggle">
       <div class="is-size-2 has-text-centered">
         <span class="icon">
@@ -19,7 +19,7 @@
               <div class="field has-addons">
                 <p class="control">
                   <span class="select">
-                    <select v-model="pathMode">
+                    <select v-model="pathMode" disabled>
                       <option v-bind:value=0>相对路径</option>
                       <option v-bind:value=1>绝对路径</option>
                     </select>
@@ -31,18 +31,15 @@
                   </a>
                 </p>
                 <p class="control is-expanded">
-                  <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径"
-                    ref="savedir"
-                    v-model="config.savedir"
-                    @focus="toggleFileChooserDialog">
+                  <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径" ref="savedir" v-model="config.savedir" @focus="toggleFileChooserDialog">
                 </p>
                 <p class="control">
                   <a class="button is-warning" title="点击打开文件夹" @click="openSaveDir">
-                    可用空间11GB
+                    可用空间 {{freespace}}
                   </a>
                 </p>
               </div>
-              <p class="help">{{saveDirRealPath}}</p>
+              <p class="help">{{helpMessage}}</p>
             </div>
           </div>
         </div>
@@ -89,10 +86,10 @@
             <div class="field is-narrow">
               <div class="control">
                 <label class="radio">
-                  <input type="radio" value="true" v-model="config.isAutoMerge"> 是
+                  <input type="radio" v-bind:value=true v-model="config.isAutoMerge"> 是
                 </label>
                 <label class="radio">
-                  <input type="radio" value="false" v-model="config.isAutoMerge"> 否
+                  <input type="radio" v-bind:value=false v-model="config.isAutoMerge"> 否
                 </label>
               </div>
             </div>
@@ -107,10 +104,10 @@
             <div class="field is-narrow">
               <div class="control">
                 <label class="radio">
-                  <input type="radio" value="true" v-model="config.isAutoClear"> 是
+                  <input type="radio" v-bind:value=true v-model="config.isAutoClear"> 是
                 </label>
                 <label class="radio">
-                  <input type="radio" value="false" v-model="config.isAutoClear"> 否
+                  <input type="radio" v-bind:value=false v-model="config.isAutoClear"> 否
                 </label>
               </div>
             </div>
@@ -126,10 +123,10 @@
             <div class="field is-narrow">
               <div class="control">
                 <label class="radio">
-                  <input type="radio" value="true" v-model="config.isDepend"> 是
+                  <input type="radio" v-bind:value=true v-model="config.isDepend"> 是
                 </label>
                 <label class="radio">
-                  <input type="radio" value="false" v-model="config.isDepend"> 否
+                  <input type="radio" v-bind:value=false v-model="config.isDepend"> 否
                 </label>
               </div>
             </div>
@@ -141,6 +138,7 @@
 </template>
 
 <script>
+import pretty from 'prettysize'
 import FileSelectDialog from '@/components/FileSelectDialog'
 import mediaApi from '../api/MediaApi'
 export default {
@@ -150,7 +148,7 @@ export default {
   },
   directives: {
     focus: {
-      update: function (el, {value}) {
+      update: function (el, { value }) {
         if (value) {
           el.focus()
         }
@@ -163,6 +161,17 @@ export default {
       .then(res => {
         this.config = res.config
         this.sysenv = res.sysenv
+
+        if (!this.config.savedir) {
+          let ds = this.sysenv.devices
+          this.config.savedir = ds
+            .sort((a, b) => {
+              let sa = Number(a.size) - a.used
+              let sb = Number(b.size) - b.used
+              return sa - sb
+            })
+            .pop().mount
+        }
       })
       .catch(err => {
         console.error(err)
@@ -170,9 +179,10 @@ export default {
   },
   data () {
     return {
+      helpMessage: '',
       isShow: false,
       isOpenFileChooserDialog: false,
-      pathMode: 0,
+      pathMode: 1,
       ps: {
         1080: '超清',
         720: '高清',
@@ -186,9 +196,7 @@ export default {
         pixel: 1080,
         isAutoMerge: false
       },
-      sysenv: {
-
-      }
+      sysenv: {}
     }
   },
   watch: {
@@ -219,15 +227,24 @@ export default {
       this.$refs.savedir.blur()
     },
     openSaveDir () {
-      let target = this.pathMode === 0 ? this.rootdir + this.savedir : this.savedir
+      let target =
+        this.pathMode === 0
+          ? this.config.rootdir + this.config.savedir
+          : this.config.savedir
       mediaApi
         .openSystemFile(target)
         .then(res => {
-
+          this.helpMessage = res
         })
         .catch(err => {
           console.error(err)
         })
+    },
+    fileChooserDialogClose (path) {
+      if (path) {
+        this.config.savedir = path
+      }
+      this.isOpenFileChooserDialog = false
     }
   },
   computed: {
@@ -241,7 +258,16 @@ export default {
       return Object.keys(this.ps)
     },
     saveDirRealPath () {
-      return this.config.rootdir + this.config.savedir
+      return this.pathMode === 1
+        ? this.config.savedir
+        : this.config.rootdir + this.config.savedir
+    },
+    freespace () {
+      let path = this.config.savedir
+      return this.sysenv.devices
+        .filter(d => path.startsWith(d.mount))
+        .map(d => pretty(Number(d.size) - d.used))
+        .pop()
     }
   }
 }
