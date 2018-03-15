@@ -1,7 +1,7 @@
 import mediaApi from '../../api/MediaApi'
 
 const state = {
-  queue: new Set()
+  queue: []
 }
 
 const EventSoureState = {
@@ -14,24 +14,30 @@ var sse
 
 const mutations = {
   ADD_DOWNLOAD_ITEM (state, downloadItem) {
-    state.queue.add(downloadItem)
+    state.queue.push(downloadItem)
   },
   REMOVE_DOWNLOAD_ITEM (state, downloadItem) {
-    if (state.queue.has(downloadItem)) {
-      state.queue.delete(downloadItem)
+    let index = state.queue.indexOf(downloadItem)
+    if (index > -1) {
+      state.queue.splice(index, 1)
     }
   }
 }
 
 const actions = {
   async addDownloadItem ({ commit }, downloadItem) {
-    let segments = await mediaApi.downloadVideo(downloadItem)
-    downloadItem.segments = segments
-    commit('ADD_DOWNLOAD_ITEM', downloadItem)
-    initSSE()
+    if (!isExists(downloadItem)) {
+      let segments = await mediaApi.downloadVideo(downloadItem)
+      downloadItem.segments = segments
+      commit('ADD_DOWNLOAD_ITEM', downloadItem)
+      initSSE()
+    }
   }
 }
 
+function isExists (downloadItem) {
+  return !!state.queue.find(item => item === downloadItem || item.url === downloadItem.url)
+}
 function initSSE () {
   if (!sse || sse.readyState === EventSoureState.CLOSED) {
     sse = new EventSource('http://localhost:3000/api/sse')

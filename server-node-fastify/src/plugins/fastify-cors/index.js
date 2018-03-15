@@ -1,4 +1,6 @@
 // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS
+
+// express 跨越插件 https://github.com/expressjs/cors
 const fp = require('fastify-plugin')
 
 module.exports = fp(function (fastify, opts, next) {

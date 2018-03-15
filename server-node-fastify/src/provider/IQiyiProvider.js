@@ -3,11 +3,17 @@ const userAgent = require('../utils/useragents')
 const r2 = require('r2')
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
 const { URL, URLSearchParams } = require('url')
 const cheerio = require('cheerio')
+const savedir = 'D:\\ztest-demo'
 const pageNum = 50
 
 class IQiyiProvider extends Provider {
+  constructor (todoVideos) {
+    super()
+    this.todoVideos = todoVideos
+  }
   static match (url) {
     super.match(url)
     let u = new URL(url)
@@ -19,9 +25,39 @@ class IQiyiProvider extends Provider {
     ss.isLocalCover = true
     return ss
   }
+
+  static async downloadVideo (video) {
+    let todoVideos = await parsedownloadurl(video)
+    return new IQiyiProvider(todoVideos)
+  }
+
+  async startDownload (reply) {
+    if (!this.isStartDownload) {
+      this.isStartDownload = true
+      let downress = await Promise.all(this.todoVideos.map(v => download(v, reply)))
+      return downress
+    }
+    return 0
+  }
 }
 
-async function getSeasonUrls (url) {
+async function getSeasonUrls (videourl) {
+  videourl = videourl.endsWith('/')
+    ? videourl.substring(0, videourl.length - 1)
+    : videourl
+  let last = videourl.lastIndexOf('/')
+  let videono = videourl.substring(last + 1)
+  let file = `./videos/${path.basename(videono, '.html')}.json`
+  try {
+    let buffer = fs.readFileSync(file)
+    return JSON.parse(buffer)
+  } catch (e) {
+    let store = await extraSeason(videourl)
+    fs.writeFileSync(file, JSON.stringify(store))
+    return store
+  }
+}
+async function extraSeason (url) {
   let resobj = {}
   let album = await getAlbum(url)
   resobj.title = album.title
@@ -75,7 +111,9 @@ async function parseSeason (album, pageNo) {
       url: i.vurl,
       uuid: i.vid,
       num: i.pd || i.pds,
-      times: Number.parseInt(i.timeLength / 60) + ':' + (i.timeLength % 60 + '').padStart(2, '0')
+      tvid: i.tvQipuId || i.id,
+      times: Number.parseInt(i.timeLength / 60) + ':' + (i.timeLength % 60 + '').padStart(2, '0'),
+      downloadProgress: 0
     })
   })
   season.videos = videos
@@ -97,6 +135,158 @@ async function getAlbum (url) {
   } catch (e) {
     throw new Error(e)
   }
+}
+
+function getVf (url) {
+  let sufix = ''
+  for (let j = 0; j < 8; j++) {
+    for (let k = 0; k < 4; k++) {
+      let v4 = (13 * (66 * k + 27 * j)) % 35
+      let v8 = v4 + 49
+      if (v4 >= 10) {
+        v8 = v4 + 88
+      }
+      v8 = String.fromCharCode(v8)
+      sufix += v8
+    }
+  }
+  url += sufix
+  let md5 = crypto.createHash('md5')
+  md5.update(url)
+  let vf = md5.digest('hex')
+  return vf
+}
+
+function getMacid () {
+  const chars = 'abcdefghijklnmopqrstuvwxyz0123456789'
+
+  let max = chars.length - 1
+  let min = 0
+  let macid = ''
+  for (let i = 0; i < 32; i++) {
+    let r = parseInt(Math.random() * (max - min + 1) + min, 10)
+    let rc = chars.charAt(r)
+    macid += rc
+  }
+  return macid
+}
+
+async function parsedownloadurl (video) {
+  let host = 'http://cache.video.qiyi.com'
+  let time = new Date().getTime()
+  let macid = getMacid()
+  let src = `/vps?tvid=${video.tvid}&vid=${video.uuid}&v=0&qypid=${
+    video.tvid
+  }_12&src=01012001010000000000&t=${time}&k_tag=1&k_uid=${macid}&rs=1`
+  let vf = getVf(src)
+  let url = host + src + '&vf=' + vf
+  let headers = {
+    'User-Agent': 'QY-Player-Windows/2.0.106',
+    qyid: macid,
+    qypid: video.tvid + '_12',
+    qyplatform: '1-2'
+  }
+  let json = await r2(url, { headers }).json
+  if (json.code === 'A00001') {
+    console.error('获取下载信息失败！')
+    return
+  }
+  let urlPrefix = json.data.vp.du
+  let lists = json.data.vp.tkl
+  if (lists.length === 0) {
+    console.error('获取下载信息失败！')
+    return
+  }
+  let downitems = []
+
+  for (let l of lists) {
+    let vinfos = l.vs
+    let maxVinfo
+    let maxScrsz
+    for (let vinfo of vinfos) {
+      let [w, h] = vinfo.scrsz.split('x')
+      let scrsz = w * h
+      if (!maxScrsz) {
+        maxScrsz = scrsz
+        maxVinfo = vinfo
+      } else {
+        if (maxScrsz < scrsz) {
+          maxScrsz = scrsz
+          maxVinfo = vinfo
+        }
+      }
+    }
+    let fs = maxVinfo.fs
+    for (let segInfo of fs) {
+      let surl = segInfo.l
+      surl = urlPrefix + surl
+      let sjson = await r2(surl, { headers }).json
+      let downurl = sjson.l
+      let parseurl = new URL(surl)
+      let index = parseurl.searchParams.get('qd_index')
+      let filesize = segInfo.b
+      let item = {
+        downurl: downurl,
+        filesize: filesize,
+        seqnum: index,
+        url: video.url
+      }
+      downitems.push(Object.assign(item, video))
+    }
+  }
+  return downitems
+}
+
+async function downloadedStatus (downitem) {
+  let file = downitem.filename
+  let filesize = downitem.filesize
+  return new Promise((resolve, reject) => {
+    fs.stat(file, (err, stats) => {
+      if (err) {
+        err.code === 'ENOENT' ? resolve(false) : reject(err)
+      }
+      if (!stats) {
+        resolve(false)
+      } else {
+        resolve({
+          isPart: Number(stats.size) !== Number(filesize),
+          cursize: stats.size
+        })
+      }
+    })
+  })
+}
+
+async function download (video, reply) {
+  return new Promise(async (resolve, reject) => {
+    let referer = video.url
+    let downloadurl = new URL(video.downurl)
+    let filename = `${video.num}${video.name}-${video.seqnum}.flv`
+    let savefile = path.join(savedir, filename)
+    let downstatus = await downloadedStatus({
+      filename: savefile,
+      filesize: video.filesize
+    })
+    if (!downstatus) {
+      let headers = {}
+      let res = await r2(downloadurl.href, { headers }).response
+
+      let write = fs.createWriteStream(savefile)
+      let curLen = 0
+      res.body.on('error', data => {
+        reject(data)
+      })
+      res.body.on('data', function (chunk) {
+        curLen += chunk.length
+        reply.sse({event: 'downloading', url: referer, seqnum: video.seqnum, curLen: curLen})
+      })
+      res.body.on('end', () => {
+        reply.sse({event: 'finish', savefile: savefile, url: referer, seqnum: video.seqnum})
+        resolve(savefile)
+      })
+      res.body.pipe(write)
+    }
+  })
 }
 
 exports = module.exports = IQiyiProvider
