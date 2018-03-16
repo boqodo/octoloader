@@ -17,3 +17,4 @@ images/
 videos/
 config/
 config/*.json
+src/providerEx
