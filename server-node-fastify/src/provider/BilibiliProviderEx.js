@@ -5,10 +5,10 @@ const r2 = require('r2')
 const fs = require('fs')
 const path = require('path')
 const cheerio = require('cheerio')
-const puppeteer = require('puppeteer')
-
+const crypto = require('crypto')
+const BILIBILI_APPKEY = '84956560bc028eb7'
+const BILIBILI_APPSEC = '94aba54af9065f71de72f5508f1cd42e'
 const savedir = 'D:\\ztest-demo'
-const executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
 
 class BilibiliProvider extends Provider {
   constructor (todoVideos) {
@@ -139,36 +139,37 @@ async function getSeasonUrls (videourl) {
   }
 }
 
+function md5 (data) {
+  let md5 = crypto.createHash('md5')
+  md5.update(data)
+  return md5.digest('hex')
+}
+
 async function parsedownloadurl (video) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const browser = await puppeteer.launch({
-        headless: true,
-        executablePath: executablePath
-      })
-      const page = await browser.newPage()
-      await page.on('response', async response => {
-        const url = response.url()
-        if (url.indexOf('/playurl?') !== -1 && response.ok) {
-          let json = await response.json()
-          let downs = []
-          json.durl.forEach((item, index) => {
-            let downurl = new URL(item.url)
-            let videoitem = {
-              downurl: downurl,
-              seqnum: index,
-              filesize: item.size
-            }
-            downs.push(Object.assign(videoitem, video))
-          })
-          resolve(downs)
-        }
-      })
-      await page.goto(video.url, { timeout: 0, waitUntil: 'networkidle0' })
-    } catch (e) {
-      reject(e)
+  let ourl = new URL(
+    'https://bangumi.bilibili.com/player/web_api/v2/playurl?' +
+			`cid=${video.cid}&appkey=${BILIBILI_APPKEY}&season_type=${
+			  video.seasontype
+			}` +
+			'&otype=json&type=&quality=0&module=bangumi&qn=0'
+  )
+  ourl.searchParams.sort()
+  let sign = md5(ourl.searchParams.toString() + BILIBILI_APPSEC)
+  ourl.searchParams.append('sign', sign)
+  let json = await r2(ourl.href, {
+    'User-Agent': userAgent()
+  }).json
+  let downs = []
+  json.durl.forEach((item, index) => {
+    let downurl = new URL(item.url)
+    let videoitem = {
+      downurl: downurl,
+      seqnum: index,
+      filesize: item.size
     }
+    downs.push(Object.assign(videoitem, video))
   })
+  return downs
 }
 
 /**

@@ -11,6 +11,7 @@
     "lowdb": "^1.0.0",
     "opn": "^5.2.0",
     "pino": "^4.13.0",
+    "puppeteer": "^1.2.0",
     "r2": "^2.0.0",
     "systeminformation": "git+https://github.com/boqodo/systeminformation.git"
   },

@@ -31,7 +31,10 @@
                   </a>
                 </p>
                 <p class="control is-expanded">
-                  <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径" ref="savedir" v-model="config.savedir" @focus="toggleFileChooserDialog">
+                  <input class="input" type="text" placeholder="输入本机用于存放下载的文件的路径"
+                    ref="savedir"
+                    v-model="config.savedir"
+                    @focus="toggleFileChooserDialog">
                 </p>
                 <p class="control">
                   <a class="button is-warning" title="点击打开文件夹" @click="openSaveDir">
@@ -44,6 +47,29 @@
           </div>
         </div>
 
+        <div class="field is-horizontal">
+          <div class="field-label is-normal">
+            <label class="label">Chrome安装目录</label>
+          </div>
+          <div class="field-body">
+            <div class="field is-expanded">
+              <div class="field has-addons">
+                 <p class="control">
+                  <a class="button" style="width:115px" title="点击打开文件夹"
+                    :class="hasChrome?'is-success':' is-warning'">
+                    {{hasChrome ? '已安装':'未安装'}}
+                  </a>
+                </p>
+                <p class="control is-expanded">
+                  <input class="input" type="text" placeholder="选择Chrome浏览器安装的路径"
+                      ref="chromeInstallPath"
+                      :disabled="hasChrome"
+                      v-model="config.chromeInstallPath">
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="field is-horizontal">
           <div class="field-label is-normal">
             <label class="label">同时下载个数</label>
@@ -191,6 +217,7 @@ export default {
       config: {
         savedir: '/download',
         rootdir: '',
+        chromeInstallPath: 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
         parallels: 1,
         cpus: 3,
         pixel: 1080,
@@ -268,6 +295,9 @@ export default {
         .filter(d => path.startsWith(d.mount))
         .map(d => pretty(Number(d.size) - d.used))
         .pop()
+    },
+    hasChrome () {
+      return !!this.config.chromeInstallPath
     }
   }
 }
