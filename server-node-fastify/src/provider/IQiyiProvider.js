@@ -3,11 +3,12 @@ const userAgent = require('../utils/useragents')
 const r2 = require('r2')
 const fs = require('fs')
 const path = require('path')
-const crypto = require('crypto')
+const puppeteer = require('puppeteer')
 const { URL, URLSearchParams } = require('url')
 const cheerio = require('cheerio')
 const savedir = 'D:\\ztest-demo'
 const pageNum = 50
+const executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
 
 class IQiyiProvider extends Provider {
   constructor (todoVideos) {
@@ -137,106 +138,76 @@ async function getAlbum (url) {
   }
 }
 
-function getVf (url) {
-  let sufix = ''
-  for (let j = 0; j < 8; j++) {
-    for (let k = 0; k < 4; k++) {
-      let v4 = (13 * (66 * k + 27 * j)) % 35
-      let v8 = v4 + 49
-      if (v4 >= 10) {
-        v8 = v4 + 88
-      }
-      v8 = String.fromCharCode(v8)
-      sufix += v8
-    }
-  }
-  url += sufix
-  let md5 = crypto.createHash('md5')
-  md5.update(url)
-  let vf = md5.digest('hex')
-  return vf
-}
-
-function getMacid () {
-  const chars = 'abcdefghijklnmopqrstuvwxyz0123456789'
-
-  let max = chars.length - 1
-  let min = 0
-  let macid = ''
-  for (let i = 0; i < 32; i++) {
-    let r = parseInt(Math.random() * (max - min + 1) + min, 10)
-    let rc = chars.charAt(r)
-    macid += rc
-  }
-  return macid
-}
-
 async function parsedownloadurl (video) {
-  let host = 'http://cache.video.qiyi.com'
-  let time = new Date().getTime()
-  let macid = getMacid()
-  let src = `/vps?tvid=${video.tvid}&vid=${video.uuid}&v=0&qypid=${
-    video.tvid
-  }_12&src=01012001010000000000&t=${time}&k_tag=1&k_uid=${macid}&rs=1`
-  let vf = getVf(src)
-  let url = host + src + '&vf=' + vf
-  let headers = {
-    'User-Agent': 'QY-Player-Windows/2.0.106',
-    qyid: macid,
-    qypid: video.tvid + '_12',
-    qyplatform: '1-2'
-  }
-  let json = await r2(url, { headers }).json
-  if (json.code === 'A00001') {
-    console.error('获取下载信息失败！')
-    return
-  }
-  let urlPrefix = json.data.vp.du
-  let lists = json.data.vp.tkl
-  if (lists.length === 0) {
-    console.error('获取下载信息失败！')
-    return
-  }
-  let downitems = []
+  return new Promise(async (resolve, reject) => {
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: executablePath
+      })
+      const page = await browser.newPage()
+      await page.on('response', async response => {
+        const url = response.url()
+        if (url.indexOf('/vms?tvId') !== -1 && response.ok) {
+          let jsonp = await response.text()
+          let json = jsonp2json(jsonp)
+          let urlPrefix = json.data.vp.du
+          let lists = json.data.vp.tkl
+          if (lists.length === 0) {
+            console.error('获取下载信息失败！')
+            return
+          }
+          let downitems = []
 
-  for (let l of lists) {
-    let vinfos = l.vs
-    let maxVinfo
-    let maxScrsz
-    for (let vinfo of vinfos) {
-      let [w, h] = vinfo.scrsz.split('x')
-      let scrsz = w * h
-      if (!maxScrsz) {
-        maxScrsz = scrsz
-        maxVinfo = vinfo
-      } else {
-        if (maxScrsz < scrsz) {
-          maxScrsz = scrsz
-          maxVinfo = vinfo
+          for (let l of lists) {
+            let vinfos = l.vs
+            let maxVinfo
+            let maxScrsz
+            for (let vinfo of vinfos) {
+              let [w, h] = vinfo.scrsz.split('x')
+              let scrsz = w * h
+              if (!maxScrsz) {
+                maxScrsz = scrsz
+                maxVinfo = vinfo
+              } else {
+                if (maxScrsz < scrsz) {
+                  maxScrsz = scrsz
+                  maxVinfo = vinfo
+                }
+              }
+            }
+            let fs = maxVinfo.fs
+            for (let segInfo of fs) {
+              let surl = segInfo.l
+              surl = urlPrefix + surl
+              let sjson = await r2(surl).json
+              let downurl = sjson.l
+              let parseurl = new URL(surl)
+              let index = parseurl.searchParams.get('qd_index')
+              let filesize = segInfo.b
+              let item = {
+                downurl: downurl,
+                filesize: filesize,
+                seqnum: index,
+                url: video.url
+              }
+              downitems.push(Object.assign(item, video))
+            }
+          }
+          resolve(downitems)
         }
-      }
+      })
+      await page.goto(video.url, { timeout: 0, waitUntil: 'networkidle0' })
+    } catch (e) {
+      reject(e)
     }
-    let fs = maxVinfo.fs
-    for (let segInfo of fs) {
-      let surl = segInfo.l
-      surl = urlPrefix + surl
-      let sjson = await r2(surl, { headers }).json
-      let downurl = sjson.l
-      let parseurl = new URL(surl)
-      let index = parseurl.searchParams.get('qd_index')
-      let filesize = segInfo.b
-      let item = {
-        downurl: downurl,
-        filesize: filesize,
-        seqnum: index,
-        url: video.url
-      }
-      downitems.push(Object.assign(item, video))
-    }
-  }
-  return downitems
+  })
 }
-
+function jsonp2json (jsonp) {
+  let first = jsonp.indexOf('{', 4)
+  let last = jsonp.indexOf(';')
+  return JSON.parse(jsonp.substring(first, last - 1))
+}
 async function downloadedStatus (downitem) {
   let file = downitem.filename
   let filesize = downitem.filesize
