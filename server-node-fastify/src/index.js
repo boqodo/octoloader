@@ -149,10 +149,11 @@ fastify.options('/api/*', async (request, reply) => {
 fastify.post('/api/download', async (request, reply) => {
   let video = request.body
   let url = video.url
-  let p = providers.matchProvider(url)
-  let pp = await p.downloadVideo(video)
-  downloadManager.createDownload(pp)
-  return pp.todoVideos
+  let Provider = providers.matchProvider(url)
+  let provider = new Provider(url)
+  await provider.parseDownloadVideos(video)
+  downloadManager.createDownload(provider)
+  return provider.todoVideos
 })
 
 // sse 连接

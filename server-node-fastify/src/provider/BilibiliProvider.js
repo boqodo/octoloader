@@ -3,17 +3,11 @@ const userAgent = require('../utils/useragents')
 const { URL } = require('url')
 const r2 = require('r2')
 const fs = require('fs')
-const path = require('path')
 const cheerio = require('cheerio')
-const puppeteer = require('puppeteer')
-
-const savedir = 'D:\\ztest-demo'
-const executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
 
 class BilibiliProvider extends Provider {
-  constructor (todoVideos) {
-    super()
-    this.todoVideos = todoVideos
+  constructor (url) {
+    super(url)
   }
   static match (url) {
     super.match(url)
@@ -27,18 +21,25 @@ class BilibiliProvider extends Provider {
     return ss
   }
 
-  static async downloadVideo (video) {
-    let todoVideos = await parsedownloadurl(video)
-    return new BilibiliProvider(todoVideos)
-  }
-
-  async startDownload (reply) {
-    if (!this.isStartDownload) {
-      this.isStartDownload = true
-      let downress = await Promise.all(this.todoVideos.map(v => download(v, reply)))
-      return downress
+  async parseResponse (video, response, resolve) {
+    const url = response.url()
+    if (url.indexOf('/playurl?') !== -1 && response.ok) {
+      let json = await response.json()
+      let downs = []
+      json.durl.forEach((item, index) => {
+        let downurl = new URL(item.url)
+        let videoitem = {
+          downurl: downurl,
+          seqnum: index,
+          filesize: item.size
+        }
+        downs.push(Object.assign(videoitem, video))
+      })
+      resolve(downs)
     }
-    return 0
+  }
+  configDownloadHeaders () {
+    return {Origin: 'https://www.bilibili.com'}
   }
 }
 
@@ -137,107 +138,6 @@ async function getSeasonUrls (videourl) {
     fs.writeFileSync(file, JSON.stringify(store))
     return store
   }
-}
-
-async function parsedownloadurl (video) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const browser = await puppeteer.launch({
-        headless: true,
-        executablePath: executablePath
-      })
-      const page = await browser.newPage()
-      await page.on('response', async response => {
-        const url = response.url()
-        if (url.indexOf('/playurl?') !== -1 && response.ok) {
-          let json = await response.json()
-          let downs = []
-          json.durl.forEach((item, index) => {
-            let downurl = new URL(item.url)
-            let videoitem = {
-              downurl: downurl,
-              seqnum: index,
-              filesize: item.size
-            }
-            downs.push(Object.assign(videoitem, video))
-          })
-          resolve(downs)
-        }
-      })
-      await page.goto(video.url, { timeout: 0, waitUntil: 'networkidle0' })
-    } catch (e) {
-      reject(e)
-    }
-  })
-}
-
-/**
- * 下载视频分段信息到指定目录
- *
- * @param {{downurl:string,seqnum:number,url: string,title: string,num: number}} video  视频对象
- */
-async function download (video, reply) {
-  return new Promise(async (resolve, reject) => {
-    let referer = video.url
-    let downloadurl = video.downurl
-    let filename = `${video.num}${video.name}-${video.seqnum}.flv`
-    let savefile = path.join(savedir, filename)
-    let downstatus = await downloadedStatus({
-      filename: savefile,
-      filesize: video.filesize
-    })
-    if (!downstatus) {
-      let headers = {
-        Host: downloadurl.host,
-        'User-Agent': userAgent(),
-        Accept: '*/*',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Access-Control-Request-Headers': 'range',
-        'Access-Control-Request-Method': 'GET',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        Origin: 'https://www.bilibili.com',
-        Pragma: 'no-cache',
-        Referer: referer
-      }
-      let res = await r2(downloadurl.href, { headers }).response
-
-      let write = fs.createWriteStream(savefile)
-      let curLen = 0
-      res.body.on('error', data => {
-        reject(data)
-      })
-      res.body.on('data', function (chunk) {
-        curLen += chunk.length
-        reply.sse({event: 'downloading', url: referer, seqnum: video.seqnum, curLen: curLen})
-      })
-      res.body.on('end', () => {
-        reply.sse({event: 'finish', savefile: savefile, url: referer, seqnum: video.seqnum})
-        resolve(savefile)
-      })
-      res.body.pipe(write)
-    }
-  })
-}
-async function downloadedStatus (downitem) {
-  let file = downitem.filename
-  let filesize = downitem.filesize
-  return new Promise((resolve, reject) => {
-    fs.stat(file, (err, stats) => {
-      if (err) {
-        err.code === 'ENOENT' ? resolve(false) : reject(err)
-      }
-      if (!stats) {
-        resolve(false)
-      } else {
-        resolve({
-          isPart: Number(stats.size) !== Number(filesize),
-          cursize: stats.size
-        })
-      }
-    })
-  })
 }
 
 exports = module.exports = BilibiliProvider

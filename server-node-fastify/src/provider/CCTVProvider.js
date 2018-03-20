@@ -6,6 +6,10 @@ const path = require('path')
 const cheerio = require('cheerio')
 
 class CCTVProvider extends Provider {
+  constructor (url) {
+    super(url)
+  }
+
   static match (url) {
     super.match(url)
     let u = new URL(url)
@@ -17,6 +21,33 @@ class CCTVProvider extends Provider {
     ss.isLocalCover = false
     return ss
   }
+
+  async parseDownloadVideos (video) {
+    let ourl = `http://vdn.apps.cntv.cn/api/getHttpVideoInfo.do?pid=${video.uuid}`
+    let json = await r2(ourl).json
+
+    let chapter = Object.keys(json.video)
+      .filter(v => v.indexOf('chapter') > -1)
+      .sort()
+      .pop()
+    this.todoVideos = await Promise.all(
+      json.video[chapter].map(async (item, index) => {
+        let downurl = new URL(item.url)
+        let filesize = await filesizeHandler(item.url)
+        let videoitem = {
+          downurl: downurl,
+          seqnum: index,
+          filesize: filesize,
+          title: json.title
+        }
+        return Object.assign(videoitem, video)
+      })
+    )
+  }
+}
+async function filesizeHandler (url) {
+  let res = await r2.head(url).response
+  return res.headers.get('content-length')
 }
 
 async function getSeasonUrls (videourl) {
@@ -62,8 +93,10 @@ async function extraSeason (url) {
       url: v.video_url,
       cover: v.video_key_frame_url,
       num: index + 1,
-      uuid: v.video_id,
-      times: v.video_length
+      uuid: guid,
+      vid: v.video_id,
+      times: v.video_length,
+      downloadProgress: 0
     })
   })
   season.videos = videos

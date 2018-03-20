@@ -12,11 +12,11 @@ class DownloadManager {
       })
     }
   }
-  start (sse) {
-    this.sse = sse
+  start (reply) {
+    this.sse = reply
     setImmediate(async () => {
       this.queue.forEach(async p => {
-        let r = await p.startDownload(sse)
+        let r = await p.startDownload(reply)
         console.log(r)
       })
     })
