@@ -58,8 +58,8 @@ function initSSE () {
               s.curLen = p.curLen
               s.downloadProgress = calcDownloadProgress(s.curLen, s.filesize)
             }
-            sumFilesize += s.filesize
-            sumCurLen += (s.curLen || 0)
+            sumFilesize += Number.parseInt(s.filesize)
+            sumCurLen += (Number.parseInt(s.curLen) || 0)
           })
           v.downloadProgress = calcDownloadProgress(sumCurLen, sumFilesize)
         }

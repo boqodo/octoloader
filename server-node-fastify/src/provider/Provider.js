@@ -62,8 +62,23 @@ class Provider {
       }
     })
   }
-  configDownloadHeaders () {
-    return {}
+  configDownloadHeaders (video) {
+    return {
+      Host: video.downurl.host || new URL(video.downurl).host,
+      'User-Agent': userAgent(),
+      Accept: '*/*',
+      'Accept-Language': 'zh-CN,zh;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Access-Control-Request-Headers': 'range',
+      'Access-Control-Request-Method': 'GET',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      Pragma: 'no-cache',
+      Referer: video.url
+    }
+  }
+  configDownloadFileName (video) {
+    return `${video.num}${video.name}-${video.seqnum}.flv`
   }
 
   async startDownload (reply) {
@@ -71,30 +86,18 @@ class Provider {
       this.isStartDownload = true
       let downress = await Promise.all(this.todoVideos.map(video => new Promise(async (resolve, reject) => {
         let referer = video.url
-        let downloadurl = video.downurl
-        let filename = `${video.num}${video.name}-${video.seqnum}.flv`
+        let downloadurl = video.downurl.href || video.downurl
+        let filename = this.configDownloadFileName(video)
         let savefile = path.join(this.config.savedir, filename)
         let downstatus = await _downloadedStatus({
           filename: savefile,
           filesize: video.filesize
         })
-        let headers = {
-          Host: downloadurl.host,
-          'User-Agent': userAgent(),
-          Accept: '*/*',
-          'Accept-Language': 'zh-CN,zh;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Access-Control-Request-Headers': 'range',
-          'Access-Control-Request-Method': 'GET',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          Pragma: 'no-cache',
-          Referer: referer
-        }
-        Object.assign(headers, this.configDownloadHeaders())
+        let headers = {}
+        Object.assign(headers, this.configDownloadHeaders(video))
 
         if (!downstatus) {
-          let res = await r2(downloadurl.href, { headers }).response
+          let res = await r2(downloadurl, { headers }).response
           let write = fs.createWriteStream(savefile)
           let curLen = 0
           res.body.on('error', data => {
@@ -112,7 +115,7 @@ class Provider {
         } else {
           if (downstatus.isPart) {
             headers['Range'] = `bytes=${downstatus.cursize}-`
-            let res = await r2(downloadurl.href, { headers }).response
+            let res = await r2(downloadurl, { headers }).response
             let write = fs.createWriteStream(savefile, {
               flags: 'r+',
               start: downstatus.cursize

@@ -27,9 +27,8 @@ class BilibiliProvider extends Provider {
       let json = await response.json()
       let downs = []
       json.durl.forEach((item, index) => {
-        let downurl = new URL(item.url)
         let videoitem = {
-          downurl: downurl,
+          downurl: item.url,
           seqnum: index,
           filesize: item.size
         }
@@ -38,8 +37,10 @@ class BilibiliProvider extends Provider {
       resolve(downs)
     }
   }
-  configDownloadHeaders () {
-    return {Origin: 'https://www.bilibili.com'}
+  configDownloadHeaders (video) {
+    let headers = super.configDownloadHeaders(video)
+    headers['Origin'] = 'https://www.bilibili.com'
+    return headers
   }
 }
 

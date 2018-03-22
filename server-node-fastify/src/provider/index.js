@@ -2,8 +2,9 @@ const Provider = require('./Provider')
 const BilibiliProvider = require('./BilibiliProvider')
 const IQiyiProvider = require('./IQiyiProvider')
 const CCTVProvider = require('./CCTVProvider')
+const LizhifmProvider = require('./LizhifmProvider')
 
-const PROVIDERS = [BilibiliProvider, IQiyiProvider, CCTVProvider]
+const PROVIDERS = [BilibiliProvider, IQiyiProvider, CCTVProvider, LizhifmProvider]
 /**
  *
  * 根据url匹配可用的服务提供者

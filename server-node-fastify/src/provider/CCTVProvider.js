@@ -21,6 +21,9 @@ class CCTVProvider extends Provider {
     ss.isLocalCover = false
     return ss
   }
+  configDownloadFileName (video) {
+    return `${video.num}${video.name}-${video.seqnum}.mp4`
+  }
 
   async parseDownloadVideos (video) {
     let ourl = `http://vdn.apps.cntv.cn/api/getHttpVideoInfo.do?pid=${video.uuid}`
@@ -47,7 +50,7 @@ class CCTVProvider extends Provider {
 }
 async function filesizeHandler (url) {
   let res = await r2.head(url).response
-  return res.headers.get('content-length')
+  return Number.parseInt(res.headers.get('content-length'))
 }
 
 async function getSeasonUrls (videourl) {

@@ -54,6 +54,10 @@ function findSearchItem (url, {seasons}) {
       }
     }
   }
+  if (seasons.length >= 1) {
+    let {videos} = seasons[0]
+    return videos[0]
+  }
 }
 function sumTotal (seasons) {
   let sum = 0
