@@ -29,20 +29,24 @@ fastify.ready(err => {
 })
 */
 
+fastify.register(require('fastify-static'), {
+  root: path.resolve(path.join(__dirname, 'asserts')),
+  prefix: '/'
+})
+
 // Server-sent events
 fastify.register(require('./plugins/fastify-sse'), err => {
   if (err) {
     throw err
   }
 })
+
 fastify.register(require('./plugins/fastify-cors'), {
   allowOrigin: ['http://localhost:8080', 'http://localhost:8081']
 })
 
 // 首页
-fastify.get('/', async (request, reply) => {
-  return { hello: 'world' }
-})
+
 // 获取基础配置信息
 fastify.get('/api/config', async (request, reply) => {
   let config = configOpt.getConfig()
